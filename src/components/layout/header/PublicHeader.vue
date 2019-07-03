@@ -1,40 +1,59 @@
 <template>
-  <el-menu
-    mode="horizontal"
-    default-active="home"
-    class="el-menu-demo"
-  >
-    <menu-item v-for="(item,index) in MenuList" :key="index" :item="item"></menu-item>
-  </el-menu>
+  <div class="header">
+    <el-button :icon="iconClass" @click="chnageCollapse" style="border: none;width:66px;"></el-button>
+    <div class="nav">
+      <breadcrumb :navList="navList"></breadcrumb>
+    </div>
+    <div class="drop">
+      <el-dropdown>
+      <span class="el-dropdown-link">
+        个人设置<i class="el-icon-arrow-down el-icon--right"></i>
+      </span>
+      <el-dropdown-menu slot="dropdown">
+        <el-dropdown-item>修改密码</el-dropdown-item>
+        <el-dropdown-item>退出登录</el-dropdown-item>
+      </el-dropdown-menu>
+    </el-dropdown>
+    </div>
+  </div>
 </template>
 
 <script lang="ts">
-import { Component, Vue, Prop } from "vue-property-decorator";
+import { Component, Vue, Prop, Watch } from "vue-property-decorator";
 import MenuItem from './MenuItem.vue';
+import Breadcrumb from "./Breadcrumb.vue";
 @Component({
-  components: { MenuItem }
+  components: { MenuItem,Breadcrumb }
 })
 export default class PublicHeader extends Vue {
-    private MenuList: any[] = [];
-    private mounted(){
-        this.getMenuList();
+    private isCollapse:Boolean = false;
+    private navList:Array<String> = [];
+    private iconClass:String = this.isCollapse?"el-icon-d-arrow-right":"el-icon-d-arrow-left";
+    private chnageCollapse(){
+        this.isCollapse = !this.isCollapse;
+        this.iconClass = this.isCollapse?"el-icon-d-arrow-right":"el-icon-d-arrow-left";
+        this.$emit("changeCollapse",this.isCollapse)
     }
-    public getMenuList(){
-        this.MenuList = [
-            {
-                menuName:"首页",
-                url:"home",
-                iconClass:"iconfont icon-shouye"
-            },
-            {
-                menuName:"2",
-                url:"2",
-                iconClass:"iconfont icon-shouye"
-            }
-        ];
+    @Watch("$route.path",{immediate: true,deep:true})
+    private router(newVal:Object,oldVal:Object){
+        console.log(this.$route)
+        this.navList = [];
+        this.navList.push(this.$route.meta.menuName)
     }
 }
 </script>
 
-<style>
+<style lang="less" scoped>
+  .header{
+    display: flex;
+    align-items: center;
+    border-bottom: 1px solid gray;
+  }
+  .nav{
+    margin-right: auto;
+  }
+  .drop{
+    line-height: 56px;
+  }
 </style>
+

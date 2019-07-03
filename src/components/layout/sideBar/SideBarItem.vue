@@ -6,11 +6,9 @@
         {{item.menuName}}
       </span>
     </template>
-    <el-menu-item-group>
       <el-menu-item v-for="child in item.children" :key="child.url" :index="child.url" @click="pushTo(child.url)">
         {{child.menuName}}
       </el-menu-item>
-    </el-menu-item-group>
   </el-submenu>
   <el-menu-item v-else :index="item.url" @click="pushTo(item.url)">
     <i :class="item.iconClass"></i>
@@ -35,7 +33,14 @@ export default class SideBarItem extends Vue{
 </script>
 <style>
   .el-menu-vertical-demo:not(.el-menu--collapse) {
-    width: 200px;
-    min-height: 400px;
+    width: 150px;
+    min-height: calc(100vh);
+  }
+  .el-menu--collapse{
+    width: 50px;
+    min-height: calc(100vh);
+  }
+  .el-submenu .el-menu-item{
+    min-width: 150px !important;
   }
 </style>

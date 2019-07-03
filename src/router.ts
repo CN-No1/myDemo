@@ -10,7 +10,14 @@ export default new Router({
     {
       path: '/',
       name: 'home',
+      meta:{ menuName:"首页" },
       component: () => import('./views/Home.vue'),
+    },
+    {
+      path: '/entity',
+      name: 'entity',
+      meta:{ menuName:"实体类" },
+      component: () => import('./views/entity/entity.vue'),
     },
   ],
 });
