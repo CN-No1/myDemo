@@ -5,12 +5,10 @@
   ],
   "linterOptions": {
     "exclude": [
-      "node_modules/**",
-      "src/**"
+      "node_modules/**"
     ]
   },
   "rules": {
-    "quotemark": [true, "single"],
     "indent": [true, "spaces", 2],
     "interface-name": false,
     "ordered-imports": false,

@@ -15,14 +15,14 @@
 </template>
 
 <script lang="ts">
-  import { Component, Vue, Prop } from "vue-property-decorator";
-  @Component({
-    components: {}
-  })
-  export default class MenuItem extends Vue {
-    @Prop(Object) private item!: any;
-    private pushTo(url:any){
-      this.$router.push({name: url})
-    }
+import { Component, Vue, Prop } from "vue-property-decorator";
+@Component({
+  components: {},
+})
+export default class MenuItem extends Vue {
+  @Prop(Object) private item!: any;
+  private pushTo(url: any) {
+    this.$router.push({ name: url });
   }
+}
 </script>
