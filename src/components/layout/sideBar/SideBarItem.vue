@@ -1,19 +1,19 @@
 <template>
-    <el-submenu v-if="item.children" :index="item.url">
+    <el-submenu v-if="item.children" :index="item.name">
     <template slot="title">
-      <i :class="item.iconClass"></i>
-      <span slot="title"  @click="pushTo(item.url)">
-        {{item.menuName}}
+      <i class="iconfont">{{item.meta.iconClass}}</i>
+      <span slot="title">
+        {{item.meta.menuName}}
       </span>
     </template>
-      <el-menu-item v-for="child in item.children" :key="child.url" :index="child.url" @click="pushTo(child.url)">
-        {{child.menuName}}
+      <el-menu-item  v-for="child in item.children" :key="child.name" :index="child.name" :style="child.meta.style" @click="pushTo(child.name) ">
+        {{child.meta.menuName}}
       </el-menu-item>
   </el-submenu>
-  <el-menu-item v-else :index="item.url" @click="pushTo(item.url)">
-    <i :class="item.iconClass"></i>
+  <el-menu-item v-else :index="item.name" @click="pushTo(item.name)">
+    <i class="iconfont">{{item.meta.iconClass}}</i>
         <template slot="title">
-            {{item.menuName}}
+            {{item.meta.menuName}}
         </template>
   </el-menu-item>
 </template>

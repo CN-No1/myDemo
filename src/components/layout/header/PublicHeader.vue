@@ -35,10 +35,10 @@ export default class PublicHeader extends Vue {
         this.$emit("changeCollapse",this.isCollapse)
     }
     @Watch("$route.path",{immediate: true,deep:true})
-    private router(newVal:Object,oldVal:Object){
-        console.log(this.$route)
+    private router(newVal:Object,oldVal:Object){  //只实现一级路由 TODO:二级路由
         this.navList = [];
-        this.navList.push(this.$route.meta.menuName)
+        this.navList.push(this.$route.meta.menuName);
+        // console.log("navList",this.$route)
     }
 }
 </script>

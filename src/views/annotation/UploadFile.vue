@@ -1,6 +1,5 @@
 <template>
   <div>
-    <h1>This is HomePage</h1>
   </div>
 </template>
 
@@ -9,7 +8,7 @@ import { Vue, Component } from 'vue-property-decorator';
 @Component({
   components: { }
 })
-export default class home extends Vue{
+export default class upload extends Vue{
 
 };
 </script>

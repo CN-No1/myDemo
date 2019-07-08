@@ -26,23 +26,9 @@ export default class SideBar extends Vue{
         this.getSideMenu()
     }
     private getSideMenu(){
-        this.sideMenu = [
-            {
-                menuName:"首页",
-                url:"home",
-                iconClass:"el-icon-location"
-            },
-            {
-                menuName:"实体类",
-                url:"entity",
-                iconClass:"el-icon-location",
-                children:[{
-                    menuName:"实体类",
-                    url:"entity",
-                    iconClass:"el-icon-location",
-                }]
-            }
-        ];
+        console.log(this.$router)
+        var router = this.$router as any;
+        this.sideMenu = router.options.routes;
     }
     private handleOpen(){
 
