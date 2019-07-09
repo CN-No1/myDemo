@@ -3,3 +3,4 @@ declare module '*.vue' {
   export default Vue;
 }
 declare module "drag-tree-table"
+declare module "@riophae/vue-treeselect"

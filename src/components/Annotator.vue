@@ -3,8 +3,8 @@
     <span
       v-for="(i,index) in docLableList"
       :key="index"
-      :style="i.lableId!=-1?'color:red;cursor:pointer;':''"
-      @click="annotateIt(i)"
+      :style="i.entityId!=-1?markStyle:''"
+      @click.stop="showDetail(i)"
     >{{ doc.slice(i.startOffset, i.endOffset) }}</span>
   </div>
 </template>
@@ -20,6 +20,9 @@ export default class Annotator extends Vue {
 
   @Prop()
   private entityPosition!: any[];
+
+  private startOffset!:number;  // 头偏移值
+  private endOffset!:number;  // 尾偏移值
 
   get sortPositionList() {
     // 对标注位置进行升序排序,并且去重
@@ -53,25 +56,26 @@ export default class Annotator extends Vue {
     // console.log(sortDoc);
   }
 
-  get markStyle() {
-    return;
+  get markStyle() {  // 标志样式
+    return "color:red;cursor:pointer;";
   }
 
   private creatPosition(start: any, end: any) {
     // 创建新的定位对象
     const position = {
-      id: 0,
-      lableId: -1,
       startOffset: start,
       endOffset: end,
+      value: String,
+      entity: String,
+      entityId: -1,
     };
     return position;
   }
 
   private getSelection() {
     const sel = window.getSelection && window.getSelection(); // 得到selection对象
-    let start;
-    let end;
+    let start: number;
+    let end: number;
     // console.log(sel);
     if (sel && sel.rangeCount > 0) {
       const range = sel.getRangeAt(0); // 返回range对象
@@ -81,13 +85,56 @@ export default class Annotator extends Vue {
       preSelectionRange.setEnd(range.startContainer, range.startOffset); // 将原本range对象的开始点作为文档开头到开始点的结束位置，从而找出开始点的真正偏移值
       start = preSelectionRange.toString().length;
       end = start + range.toString().length;
+      if (this.validRange(start, end)) {
+        this.$emit("getRangeData", range.toString());
+        this.startOffset = start;
+        this.endOffset = end;
+      } else {
+        const vm: any = this;
+        vm.$message({
+          type: "error",
+          message: "选择区域不合法！",
+          duration: 1000,
+        });
+      }
     }
   }
 
-  private annotateIt(i: any) {
-    if (i.lableId === -1) {
+  private validRange(startOffset: number, endOffset: number) {  // 判断选择区域是否合法
+    if (startOffset === endOffset) {
       return false;
     }
+    if (startOffset > this.doc.length || endOffset > this.doc.length) {
+      return false;
+    }
+    if (startOffset < 0 || endOffset < 0) {
+      return false;
+    }
+    for (const i of this.entityPosition) {  // 判断选中区域是否被包含在已标记词汇中
+      if ((i.startOffset <= startOffset) && (startOffset <= i.endOffset)) {
+        return false;
+      }
+      if ((i.startOffset <= endOffset) && (endOffset <= i.endOffset)) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  private addLabel(){  // 新增标注点
+    const offset = {
+      startOffset: this.startOffset,
+      endOffset: this.endOffset,
+    };
+    this.$emit("addLabel",offset);
+  }
+
+  private showDetail(i: any) {  // 查看标注文本详情
+  console.log(i)
+    if (i.entityId === -1) {
+      return false;
+    }
+    this.$emit("showDetail", i.value);
   }
 }
 </script>
