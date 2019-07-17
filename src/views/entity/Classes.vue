@@ -1,187 +1,164 @@
 <template>
-  <div class="home">
+  <div class="header">
     <div>
-      <el-button type="success">新增顶层节点</el-button>
-      <el-button type="danger">删除</el-button>
+      <el-button type="primary" @click="addTopNode">新增顶层节点</el-button>
+      <el-button type="success" @click="save">保存</el-button>
     </div>
-    <dragTreeTable :data="treeData" :onDrag="onTreeDataChange" :fixed="true" :isdraggable="true"></dragTreeTable>
+    <el-row>
+      <el-col :span="8">
+        <el-tree
+          :data="entityClassTree"
+          node-key="id"
+          default-expand-all
+          :expand-on-click-node="false"
+          @node-click="handleClick"
+          draggable
+        >
+          <span class="custom-tree-node" slot-scope="{ node, entityClassTree }">
+            <span>{{ node.label }}</span>
+            <span>
+              <el-button
+                type="text"
+                size="mini"
+                @click.stop="() => append(entityClassTree)"
+                icon="el-icon-plus"
+              ></el-button>
+              <el-button
+                type="text"
+                size="mini"
+                @click.stop="() => remove(node, entityClassTree)"
+                icon="el-icon-delete"
+              ></el-button>
+            </span>
+          </span>
+        </el-tree>
+      </el-col>
+      <el-col :span="16" v-if="formVisable">
+        <el-form
+          label-position="left"
+          label-width="80px"
+          :model="entityClass"
+          @submit.native.prevent
+        >
+          <el-form-item label="名称">
+            <el-input v-model="entityClass.name" @change="editNode"></el-input>
+          </el-form-item>
+        </el-form>
+      </el-col>
+    </el-row>
   </div>
 </template>
 
 <script lang="ts">
 import { Vue, Component } from "vue-property-decorator";
-import dragTreeTable from "drag-tree-table";
-@Component({
-  components: { dragTreeTable },
-})
+import EntityAPIImpl from "../../api/impl/EntityAPIImpl";
+
+interface entityClass {
+  // 实体类对象
+  name: string;
+}
+
+interface node {
+  // 节点对象
+  id: string;
+  label: string;
+  children: [];
+}
+
+@Component({})
 export default class Entity extends Vue {
-  private treeData = {
-    columns: [
-      {
-        type: "checkbox",
-        isContainChildren: true, // 是否勾选子节点，默认false
-        onChange: this.onCheck, // parmas selectRows
-        align: "center",
-      },
-      {
-        type: "selection",
-        title: "菜单名称",
-        field: "name",
-        flex: 1,
-        align: "center",
-        formatter: (item: any) => {
-          return "<a>" + item.name + "</a>";
-        },
-      },
-      {
-        title: "操作",
-        type: "action",
-        flex: 1,
-        align: "center",
-        actions: [
-          {
-            text: "新增子节点",
-            onclick: this.addSubNode,
-            formatter: (item: any) => {
-              return '<i class="iconfont">&#xe601;</i>';
-            },
-          },
-          {
-            text: "新增兄弟节点",
-            onclick: this.addSiblingNode,
-            formatter: (item: any) => {
-              return '<i class="iconfont">&#xe6b8;</i>';
-            },
-          },
-        ],
-      },
-    ],
-    lists: [
-      {
-        id: 1,
-        parent_id: 0,
-        order: 0,
-        name: "动物类",
-        open: true,
-        children: [
-          {
-            id: 11,
-            parent_id: 1,
-            open: true,
-            order: 0,
-            name: "猪",
-            children: [],
-          },
-        ],
-      },
-      {
-        id: 2,
-        parent_id: 0,
-        order: 1,
-        name: "昆虫类",
-        open: true,
-        children: [
-          {
-            id: 21,
-            parent_id: 5,
-            open: true,
-            order: 0,
-            name: "蚂蚁",
-            children: [],
-          },
-        ],
-      },
-      {
-        id: 3,
-        parent_id: 0,
-        order: 2,
-        name: "植物类",
-        open: true,
-        children: [
-          {
-            id: 31,
-            parent_id: 3,
-            open: true,
-            order: 0,
-            name: "花",
-            children: [],
-          },
-        ],
-      },
-    ],
-    custom_field: {
-      id: "id",
-      order: "sort",
-      lists: "children",
-      parent_id: "parent_id",
-    },
-  };
-  // list:更新后的数据源
-  // from: 当前被拖拽的行
-  // to: 目标拖拽行
-  // where: 拖拽的类型，top（上面）、center（里面）、bottom（下面）
-  private onTreeDataChange(
-    list: any[],
-    from: object,
-    to: object,
-    where: string,
-  ) {
-    // console.log(list, from, to, where);
-    this.treeData.lists = list;
-  }
-  private addSubNode(i: any) {
-    // 新增子节点
-    const obj = {
-      id: 12,
-      parent_id: i.id,
-      open: true,
-      order: i.children.length,
-      name: "蚂蚁",
-      children: [],
-    };
-    i.children.push(obj);
-    // var q = this.findNode(i.id, this.treeData.lists);
-    // console.log(q);
-  }
+  private formVisable: boolean = false;
+  private entityClass!: entityClass;
+  private entityClassTree: any[] = []; // 实体类树数据
+  private node!: node; // 节点临时对象，用于动态修改树节点展示
 
-  private addSiblingNode(i: any) {
-    // 新增兄弟节点
-    const obj = {
-      id: 12,
-      parent_id: i.parent_id,
-      open: true,
-      order: i.children.length,
-      name: "蚂蚁",
-      children: [],
-    };
-    if (i.parent_id === 0) {
-      this.treeData.lists.unshift(obj);
-    } else {
-      this.findNode(i.parent_id, this.treeData.lists).children.push(obj);
-    }
-  }
+  private entityAPI = new EntityAPIImpl();
 
-  private findNode(id: number, arr: any[]): any {
-    // 通过id寻找节点
-    // debugger
-    let node;
-    arr.map((item) => {
-      if (item.id === id) {
-        node = item;
-      } else {
-        if (item.children) {
-          return this.findNode(id, item.children);
-        }
-      }
+  private mounted() {
+    // 初始化实体类树
+    this.entityAPI.getClasses().then(res => {
+      this.entityClassTree = res;
     });
-    if (node) {
-      // console.log(node);
-      return node;
-    }
   }
 
-  private onCheck(i: any) {
-    // 选中
+  private handleClick(data: any) {
+    // 点击节点编辑
+    this.node = data;
+    this.formVisable = true;
+    console.log(data);
+    this.entityClass.name = data.label;
+  }
+
+  private append(data: any) {
+    // 新增子节点
+    const newChild: node = {
+      id: this.getUUID(),
+      label: "空节点",
+      children: []
+    };
+    if (!data.children) {
+      this.$set(data, "children", []);
+    }
+    data.children.push(newChild);
+  }
+
+  private remove(node: any, data: any) {
+    // 删除当前节点
+    const parent = node.parent;
+    const children = parent.data.children || parent.data;
+    const index = children.findIndex((d: any) => d.id === data.id);
+    children.splice(index, 1);
+  }
+
+  private getUUID() {
+    // 生成UUID
+    const s: any = [];
+    const hexDigits = "0123456789abcdef";
+    for (var i = 0; i < 36; i++) {
+      s[i] = hexDigits.substr(Math.floor(Math.random() * 0x10), 1);
+    }
+    s[14] = "4"; // bits 12-15 of the time_hi_and_version field to 0010
+    s[8] = s[13] = s[18] = s[23] = "";
+    const uuid = s.join("");
+    return uuid;
+  }
+
+  private addTopNode() {
+    // 新增顶层节点
+    const node: node = { id: this.getUUID(), label: "空节点", children: [] };
+    this.entityClassTree.unshift(node);
+  }
+
+  private editNode(val: any) {
+    // 动态修改树节点显示
+    this.node.label = val;
+  }
+
+  private save() {
+    // 保存实体树
+    this.entityAPI.updateClasses(this.entityClassTree);
   }
 }
 </script>
+
+<style lang="less" scoped>
+.custom-tree-node {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 14px;
+  padding-right: 8px;
+}
+.el-form {
+  padding-left: 120px;
+}
+.el-input {
+  width: 140px;
+}
+.header {
+  & > div:first-child {
+    padding-bottom: 20px;
+  }
+}
+</style>

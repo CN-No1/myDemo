@@ -17,7 +17,7 @@
 </template>
 
 <script lang="ts">
-import { Component, Vue, Prop, Watch } from "vue-property-decorator";
+import { Component, Vue, Prop, Watch, Provide } from "vue-property-decorator";
 import PublicHeader from "./header/PublicHeader.vue";
 import SideBar from "./sideBar/SideBar.vue";
 @Component({

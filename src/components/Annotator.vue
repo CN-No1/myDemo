@@ -4,7 +4,7 @@
       v-for="(i,index) in docLableList"
       :key="index"
       :style="i.entityId!=-1?markStyle:''"
-      @click.stop="showDetail(i)"
+      @click="showDetail(i)"
     >{{ doc.slice(i.startOffset, i.endOffset) }}</span>
   </div>
 </template>
@@ -65,8 +65,8 @@ export default class Annotator extends Vue {
     const position = {
       startOffset: start,
       endOffset: end,
-      value: String,
-      entity: String,
+      value: "",
+      entity: "",
       entityId: -1,
     };
     return position;
@@ -102,7 +102,7 @@ export default class Annotator extends Vue {
 
   private validRange(startOffset: number, endOffset: number) {  // 判断选择区域是否合法
     if (startOffset === endOffset) {
-      return false;
+      return true;
     }
     if (startOffset > this.doc.length || endOffset > this.doc.length) {
       return false;

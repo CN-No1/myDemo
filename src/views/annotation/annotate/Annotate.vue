@@ -51,6 +51,8 @@
 <script lang="ts">
 import { Vue, Component } from "vue-property-decorator";
 import Annotator from "../../../components/Annotator.vue";
+import Treeselect from "@riophae/vue-treeselect";
+import "@riophae/vue-treeselect/dist/vue-treeselect.css";
 
 interface Position {
   //  定位对象
@@ -60,9 +62,6 @@ interface Position {
   endOffset: number;
   entity: string;
 }
-
-import Treeselect from "@riophae/vue-treeselect";
-import "@riophae/vue-treeselect/dist/vue-treeselect.css";
 
 @Component({
   components: { Annotator, Treeselect }
@@ -131,6 +130,9 @@ export default class Annotate extends Vue {
   }
 
   private getRangeData(text: string) {
+    if(text === ""){
+      return
+    }
     // 选中文本
     this.dialogVisible = true;
     this.text = text;
@@ -151,10 +153,10 @@ export default class Annotate extends Vue {
   }
 
   private addLabel(offset: any) {
-    this.entityArr.map(item => {
+    this.entityArr.map((item) => {
       // debugger
-      const arr = this.entityPosition.filter((e) => e.value===item.label&&e.entityId === item.id);
-      if(arr.length===0){
+      const arr = this.entityPosition.filter((e) => e.value === item.label && e.entityId === item.id);
+      if (arr.length === 0) {
         const newLabel = {
           startOffset: offset.startOffset,
           endOffset: offset.endOffset,
@@ -180,10 +182,9 @@ export default class Annotate extends Vue {
       const obj = {
         id: item.entityId,
         label: item.value
-      }
+      };
       this.entityArr.push(obj);
     });
-    console.log(this.entityArr)
     this.dialogVisible = true;
   }
 
