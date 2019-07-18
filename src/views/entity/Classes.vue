@@ -11,39 +11,39 @@
           node-key="id"
           default-expand-all
           :expand-on-click-node="false"
+          :highlight-current="true"
           @node-click="handleClick"
           draggable
         >
-          <span class="custom-tree-node" slot-scope="{ node, entityClassTree }">
+          <span class="custom-tree-node" slot-scope="{ node, data }">
             <span>{{ node.label }}</span>
             <span>
               <el-button
                 type="text"
                 size="mini"
-                @click.stop="() => append(entityClassTree)"
+                @click.stop="() => append(data)"
                 icon="el-icon-plus"
               ></el-button>
               <el-button
                 type="text"
                 size="mini"
-                @click.stop="() => remove(node, entityClassTree)"
+                @click.stop="() => remove(node, data)"
                 icon="el-icon-delete"
               ></el-button>
             </span>
           </span>
         </el-tree>
       </el-col>
-      <el-col :span="16" v-if="formVisable">
-        <el-form
-          label-position="left"
-          label-width="80px"
-          :model="entityClass"
-          @submit.native.prevent
-        >
-          <el-form-item label="名称">
-            <el-input v-model="entityClass.name" @change="editNode"></el-input>
-          </el-form-item>
-        </el-form>
+      <el-col :span="16" v-show="formVisable" class="node-form">
+        <div class="node-name">
+          <span>节点名称:</span>
+          <el-input
+            ref="nodeName"
+            v-model="entityClass.name"
+            @input="editNode"
+            @focus="inputFocus($event)"
+          ></el-input>
+        </div>
       </el-col>
     </el-row>
   </div>
@@ -68,7 +68,7 @@ interface node {
 @Component({})
 export default class Entity extends Vue {
   private formVisable: boolean = false;
-  private entityClass!: entityClass;
+  private entityClass: entityClass = { name: "" };
   private entityClassTree: any[] = []; // 实体类树数据
   private node!: node; // 节点临时对象，用于动态修改树节点展示
 
@@ -76,8 +76,8 @@ export default class Entity extends Vue {
 
   private mounted() {
     // 初始化实体类树
-    this.entityAPI.getClasses().then(res => {
-      this.entityClassTree = res;
+    this.entityAPI.getClasses().then(({ data }) => {
+      this.entityClassTree = data;
     });
   }
 
@@ -85,8 +85,14 @@ export default class Entity extends Vue {
     // 点击节点编辑
     this.node = data;
     this.formVisable = true;
-    console.log(data);
     this.entityClass.name = data.label;
+    const input = this.$refs.nodeName as any;
+    input.focus();
+  }
+
+  private inputFocus(e: any) {
+    // input获取焦点自动选中
+    e.currentTarget.select();
   }
 
   private append(data: any) {
@@ -108,6 +114,7 @@ export default class Entity extends Vue {
     const children = parent.data.children || parent.data;
     const index = children.findIndex((d: any) => d.id === data.id);
     children.splice(index, 1);
+    this.formVisable = false;
   }
 
   private getUUID() {
@@ -142,23 +149,5 @@ export default class Entity extends Vue {
 </script>
 
 <style lang="less" scoped>
-.custom-tree-node {
-  flex: 1;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  font-size: 14px;
-  padding-right: 8px;
-}
-.el-form {
-  padding-left: 120px;
-}
-.el-input {
-  width: 140px;
-}
-.header {
-  & > div:first-child {
-    padding-bottom: 20px;
-  }
-}
+@import "~less/tree-form";
 </style>

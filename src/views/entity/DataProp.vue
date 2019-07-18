@@ -1,5 +1,5 @@
 <template>
-  <div class="home">
+  <div class="header">
     <div>
       <el-button type="primary" @click="addTopNode">新增顶层节点</el-button>
       <el-button type="success" @click="save">保存</el-button>
@@ -7,10 +7,11 @@
     <el-row>
       <el-col :span="8">
         <el-tree
-          :data="data"
+          :data="dataPropTree"
           node-key="id"
           default-expand-all
           :expand-on-click-node="false"
+          :highlight-current="true"
           @node-click="handleClick"
           draggable
         >
@@ -36,7 +37,12 @@
       <el-col :span="16" v-if="formVisable" class="node-form">
         <div class="node-name">
           <p>节点名称:</p>
-          <el-input v-model="objectProp.name" @change="editNode"></el-input>
+          <el-input
+            ref="nodeName"
+            v-model="dataProp.name"
+            @input="editNode"
+            @focus="inputFocus($event)"
+          ></el-input>
         </div>
         <div class="treeselect">
           <treeselect
@@ -49,20 +55,16 @@
             :flat="true"
             placeholder="请选择实体类"
           />
-          <el-select v-model="value" placeholder="请选择">
+        </div>
+        <div class="data-type">
+          <el-select v-model="dataProp.dataType" placeholder="请选择数据类型">
             <el-option
               v-for="(item,index) in dataTypeList"
               :key="index"
-              :label="item.label"
-              :value="item.label"
+              :label="item.name"
+              :value="item.name"
             ></el-option>
           </el-select>
-          <el-button
-            size="mini"
-            type="danger"
-            @click="removeOneRelationship(index)"
-            icon="el-icon-delete"
-          ></el-button>
         </div>
       </el-col>
     </el-row>
@@ -71,6 +73,7 @@
 
 <script lang="ts">
 import { Vue, Component } from "vue-property-decorator";
+import Treeselect from "@riophae/vue-treeselect";
 
 interface dataProp {
   // 数据属性对象
@@ -88,10 +91,10 @@ interface node {
   dataType: string;
 }
 
-@Component({})
+@Component({ components: { Treeselect } })
 export default class DataProp extends Vue {
   private formVisable: boolean = false;
-  private dataProp!: dataProp; // 数据属性对象
+  private dataProp: dataProp = { name: "", entityClass: [], dataType: "" }; // 数据属性对象
   private dataPropTree: node[] = [
     {
       id: "1",
@@ -104,18 +107,67 @@ export default class DataProp extends Vue {
   private dataTypeList: any[] = []; // 数据类型列表
   private node!: node; // 被选中的节点
   private entityList: any[] = []; // 实体类树
+  private sortValueBy: string = "LEVEL"; // 选项排序方式（"ORDER_SELECTED"，"LEVEL"，"INDEX"）
 
-  private handleClick(data: any) {
+  private mounted() {
+    // 初始化实体类树、数据类型列表
+    this.entityList = [
+      {
+        id: 1,
+        label: "人",
+        children: [
+          {
+            id: 11,
+            label: "驾驶员"
+          },
+          {
+            id: 12,
+            label: "行人"
+          }
+        ]
+      },
+      {
+        id: 2,
+        label: "车"
+      },
+      {
+        id: 3,
+        label: "交通标志"
+      }
+    ];
+    this.dataTypeList = [
+      {
+        id: "1",
+        name: "string"
+      }
+    ];
+  }
+  private handleClick(data: node) {
     // 点击节点编辑
     this.node = data;
     this.formVisable = true;
     console.log(data);
     this.dataProp.name = data.label;
+    this.dataProp.entityClass = data.entityClass;
+    this.dataProp.dataType = data.dataType;
+    const input = this.$refs.nodeName as any;
+    input.focus();
+  }
+
+  private inputFocus(e: any) {
+    // input获取焦点自动选中
+    e.currentTarget.select();
   }
 
   private append(data: any) {
     // 新增子节点
-    const newChild = { id: this.getUUID(), label: "空节点", children: [] };
+    const newChild: node = {
+      id: this.getUUID(),
+      label: "空节点",
+      children: [],
+      entityClass: [],
+      dataType: ""
+    };
     if (!data.children) {
       this.$set(data, "children", []);
     }
@@ -128,6 +180,7 @@ export default class DataProp extends Vue {
     const children = parent.data.children || parent.data;
     const index = children.findIndex((d: any) => d.id === data.id);
     children.splice(index, 1);
+    this.formVisable = false;
   }
 
   private getUUID() {
@@ -156,6 +209,7 @@ export default class DataProp extends Vue {
   }
 
   private editNode(val: any) {
+    // 编辑节点名字
     this.node.label = val;
   }
 
@@ -164,23 +218,12 @@ export default class DataProp extends Vue {
 </script>
 
 <style lang="less" scoped>
-.custom-tree-node {
-  flex: 1;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  font-size: 14px;
-  padding-right: 8px;
+@import "~less/tree-form";
+.treeselect {
+  width: 217px;
+  padding-bottom: 20px;
 }
-.el-form {
-  padding-left: 120px;
-}
-.el-input {
-  width: 140px;
-}
-.home {
-  & > div:first-child {
-    padding-bottom: 20px;
-  }
+.data-type {
+  width: 217px;
 }
 </style>

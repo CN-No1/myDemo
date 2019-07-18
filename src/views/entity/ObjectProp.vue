@@ -1,5 +1,5 @@
 <template>
-  <div class="home">
+  <div class="header">
     <div>
       <el-button type="primary" @click="addTopNode">新增顶层节点</el-button>
       <el-button type="success" @click="save">保存</el-button>
@@ -11,6 +11,7 @@
           node-key="id"
           default-expand-all
           :expand-on-click-node="false"
+          :highlight-current="true"
           @node-click="handleClick"
           draggable
         >
@@ -35,11 +36,11 @@
       </el-col>
       <el-col :span="16" v-if="formVisable" class="node-form">
         <div class="node-name">
-          <p>节点名称:</p>
-          <el-input v-model="objectProp.name" @change="editNode"></el-input>
+          <span>节点名称:</span>
+          <el-input ref="nodeName" v-model="objectProp.name" @input="editNode" @focus="inputFocus($event)"></el-input>
         </div>
         <div class="add-rel">
-          <span>添加关系:</span>
+          <span>关系:</span>
           <el-button size="mini" type="success" @click="addOneRelationship" icon="el-icon-plus"></el-button>
         </div>
         <div class="treeselect" v-for="(item,index) in objectProp.relationship" :key="index">
@@ -146,6 +147,13 @@ export default class ObjectProp extends Vue {
     console.log(data);
     this.objectProp.name = data.label;
     this.objectProp.relationship = data.relationship;
+    const input = this.$refs.nodeName as any;
+    input.focus();
+  }
+  
+  private inputFocus(e: any) {
+    // input获取焦点自动选中
+    e.currentTarget.select();
   }
 
   private append(data: any) {
@@ -168,6 +176,7 @@ export default class ObjectProp extends Vue {
     const children = parent.data.children || parent.data;
     const index = children.findIndex((d: any) => d.id === data.id);
     children.splice(index, 1);
+    this.formVisable = false;
   }
 
   private getUUID() {
@@ -215,31 +224,7 @@ export default class ObjectProp extends Vue {
 </script>
 
 <style lang="less" scoped>
-.custom-tree-node {
-  flex: 1;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  font-size: 14px;
-  padding-right: 8px;
-}
-.el-form {
-  padding-left: 120px;
-}
-.el-input {
-  width: 140px;
-}
-.home {
-  & > div:first-child {
-    padding-bottom: 20px;
-  }
-}
-.node-form {
-  padding: 0 30px;
-}
-.node-name {
-  padding-bottom: 20px; 
-}
+@import "~less/tree-form";
 .add-rel {
   span {
     padding-right: 20px;
