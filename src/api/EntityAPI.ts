@@ -1,8 +1,10 @@
-import EntityClasses from "./model/EntityClasses";
+import EntityClassModel from "./model/EntityClassModel";
 interface EntityAPI {
-    getClasses(): Promise<any>;
+    getClass(thingId: string): Promise<any>;
 
-    updateClasses(entityClass: EntityClasses[]): Promise<any>;
+    updateClass(entityClass: EntityClassModel): Promise<any>;
+
+    getThing(): Promise<any>;
 }
 
 export default EntityAPI;

@@ -1,13 +1,16 @@
 <template>
   <div class="header">
     <div>
-      <el-button type="primary" @click="addTopNode">新增顶层节点</el-button>
-      <el-button type="success" @click="save">保存</el-button>
+      <el-select v-model="thing" placeholder="请选择" @change="selectThing">
+        <el-option v-for="item in things" :key="item.id" :label="item.name" :value="item.id"></el-option>
+      </el-select>
+      <el-button v-if="thing!=''" type="primary" @click="addTopNode">新增顶层节点</el-button>
+      <el-button v-if="thing!=''" type="success" @click="save">保存</el-button>
     </div>
     <el-row>
       <el-col :span="8">
         <el-tree
-          :data="entityClassTree"
+          :data="entityClass.entityList"
           node-key="id"
           default-expand-all
           :expand-on-click-node="false"
@@ -39,7 +42,7 @@
           <span>节点名称:</span>
           <el-input
             ref="nodeName"
-            v-model="entityClass.name"
+            v-model="node.label"
             @input="editNode"
             @focus="inputFocus($event)"
           ></el-input>
@@ -52,32 +55,42 @@
 <script lang="ts">
 import { Vue, Component } from "vue-property-decorator";
 import EntityAPIImpl from "../../api/impl/EntityAPIImpl";
-
-interface entityClass {
-  // 实体类对象
-  name: string;
-}
-
-interface node {
-  // 节点对象
-  id: string;
-  label: string;
-  children: [];
-}
+import EntityClassModel, {
+  EntityClassNode
+} from "../../api/model/EntityClassModel";
+import { getUUID } from "../../util/uuid";
 
 @Component({})
 export default class Entity extends Vue {
   private formVisable: boolean = false;
-  private entityClass: entityClass = { name: "" };
-  private entityClassTree: any[] = []; // 实体类树数据
-  private node!: node; // 节点临时对象，用于动态修改树节点展示
-
+  private entityClass: EntityClassModel = new EntityClassModel();
+  private node: EntityClassNode = { label: "" }; // 节点临时对象，用于动态修改树节点展示
+  private thing: string = ""; // 选中thingId
+  private things: any[] = []; // thing下拉数据
   private entityAPI = new EntityAPIImpl();
 
   private mounted() {
-    // 初始化实体类树
-    this.entityAPI.getClasses().then(({ data }) => {
-      this.entityClassTree = data;
+    // 初始化
+    this.getThing();
+  }
+
+  private selectThing(val: string) {
+    this.entityClass.thingId = val;
+    // 选择thing查找class
+    this.getClass();
+  }
+
+  private getThing() {
+    // 获取thing
+    this.entityAPI.getThing().then(({ data }) => {
+      this.things = data;
+    });
+  }
+
+  private getClass() {
+    // 获取实体类树
+    this.entityAPI.getClass(this.thing).then(({ data }) => {
+      if (data) this.entityClass = data;
     });
   }
 
@@ -85,7 +98,6 @@ export default class Entity extends Vue {
     // 点击节点编辑
     this.node = data;
     this.formVisable = true;
-    this.entityClass.name = data.label;
     const input = this.$refs.nodeName as any;
     input.focus();
   }
@@ -97,8 +109,8 @@ export default class Entity extends Vue {
 
   private append(data: any) {
     // 新增子节点
-    const newChild: node = {
-      id: this.getUUID(),
+    const newChild: EntityClassNode = {
+      id: getUUID(),
       label: "空节点",
       children: []
     };
@@ -117,23 +129,14 @@ export default class Entity extends Vue {
     this.formVisable = false;
   }
 
-  private getUUID() {
-    // 生成UUID
-    const s: any = [];
-    const hexDigits = "0123456789abcdef";
-    for (var i = 0; i < 36; i++) {
-      s[i] = hexDigits.substr(Math.floor(Math.random() * 0x10), 1);
-    }
-    s[14] = "4"; // bits 12-15 of the time_hi_and_version field to 0010
-    s[8] = s[13] = s[18] = s[23] = "";
-    const uuid = s.join("");
-    return uuid;
-  }
-
   private addTopNode() {
     // 新增顶层节点
-    const node: node = { id: this.getUUID(), label: "空节点", children: [] };
-    this.entityClassTree.unshift(node);
+    const node: EntityClassNode = {
+      id: getUUID(),
+      label: "空节点",
+      children: []
+    };
+    this.entityClass.entityList.unshift(node);
   }
 
   private editNode(val: any) {
@@ -143,7 +146,7 @@ export default class Entity extends Vue {
 
   private save() {
     // 保存实体树
-    this.entityAPI.updateClasses(this.entityClassTree);
+    this.entityAPI.updateClass(this.entityClass);
   }
 }
 </script>

@@ -11,11 +11,8 @@ module.exports = {
         .set('@$', resolve('src'))
         .set('assets', resolve('src/assets'))
         .set('components', resolve('src/components'))
-        .set('public', resolve('public'))
         .set('less', resolve('src/less'))
-        .set('utils', resolve('src/utils'))
-        .set('plugins', resolve('src/plugins'))
-        .set('api', resolve('src/common/api'))
+        .set('api', resolve('src/api'))
   },
   devServer: {
     port: 8123,

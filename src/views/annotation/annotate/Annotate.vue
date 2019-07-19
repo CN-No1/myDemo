@@ -56,8 +56,9 @@ import "@riophae/vue-treeselect/dist/vue-treeselect.css";
 
 interface Position {
   //  定位对象
-  id: string;
-  lableId: string;
+  id?: string;
+  value: string;
+  entityId: string;
   startOffset: number;
   endOffset: number;
   entity: string;
@@ -68,7 +69,7 @@ interface Position {
 })
 export default class Annotate extends Vue {
   private doc: string = ""; //  文档内容（纯文本）
-  private entityPosition: any[] = [];  // 标注位置
+  private entityPosition: Position[] = [];  // 标注位置
   private dialogVisible: boolean = false; // 对话框显示
   private text: string = ""; // 选中文本
   private entityList: any[] = []; // 实体类树
@@ -81,7 +82,7 @@ export default class Annotate extends Vue {
     let sort = this.entityPosition.sort(
       (a, b) => a.startOffset - b.startOffset,
     );
-    sort = sort.reduce((item, next) => {
+    sort = sort.reduce((item: Position[], next) => {
       if (!sorted[next.entityId]) {
         sorted[next.entityId] = true && item.push(next);
       }
@@ -123,7 +124,7 @@ export default class Annotate extends Vue {
         startOffset: 0,
         endOffset: 2,
         value: "原告",
-        entityId: 1,
+        entityId: "1",
         entity: "人"
       }
     ];
@@ -157,7 +158,7 @@ export default class Annotate extends Vue {
       // debugger
       const arr = this.entityPosition.filter((e) => e.value === item.label && e.entityId === item.id);
       if (arr.length === 0) {
-        const newLabel = {
+        const newLabel: Position = {
           startOffset: offset.startOffset,
           endOffset: offset.endOffset,
           value: this.text,

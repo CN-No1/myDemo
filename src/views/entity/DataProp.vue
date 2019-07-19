@@ -7,7 +7,7 @@
     <el-row>
       <el-col :span="8">
         <el-tree
-          :data="dataPropTree"
+          :data="dataProp.dataPropList"
           node-key="id"
           default-expand-all
           :expand-on-click-node="false"
@@ -34,19 +34,19 @@
           </span>
         </el-tree>
       </el-col>
-      <el-col :span="16" v-if="formVisable" class="node-form">
+      <el-col :span="16" v-show="formVisable" class="node-form">
         <div class="node-name">
           <p>节点名称:</p>
           <el-input
             ref="nodeName"
-            v-model="dataProp.name"
+            v-model="node.label"
             @input="editNode"
             @focus="inputFocus($event)"
           ></el-input>
         </div>
         <div class="treeselect">
           <treeselect
-            v-model="dataProp.entityClass"
+            v-model="node.entityClass"
             valueFormat="object"
             :multiple="true"
             :options="entityList"
@@ -57,7 +57,7 @@
           />
         </div>
         <div class="data-type">
-          <el-select v-model="dataProp.dataType" placeholder="请选择数据类型">
+          <el-select v-model="node.dataType" placeholder="请选择数据类型">
             <el-option
               v-for="(item,index) in dataTypeList"
               :key="index"
@@ -74,38 +74,15 @@
 <script lang="ts">
 import { Vue, Component } from "vue-property-decorator";
 import Treeselect from "@riophae/vue-treeselect";
-
-interface dataProp {
-  // 数据属性对象
-  name: string;
-  entityClass: any[];
-  dataType: string;
-}
-
-interface node {
-  // 节点对象
-  id: string;
-  label: string;
-  children: node[];
-  entityClass: any[];
-  dataType: string;
-}
+import DataPropModel,{ DataPropNode } from '../../api/model/DataPropModel';
+import { getUUID } from '@/util/uuid';
 
 @Component({ components: { Treeselect } })
 export default class DataProp extends Vue {
   private formVisable: boolean = false;
-  private dataProp: dataProp = { name: "", entityClass: [], dataType: "" }; // 数据属性对象
-  private dataPropTree: node[] = [
-    {
-      id: "1",
-      label: "一级 1",
-      children: [],
-      entityClass: [],
-      dataType: ""
-    }
-  ];
+  private dataProp: DataPropModel = new DataPropModel(); // 数据属性对象
   private dataTypeList: any[] = []; // 数据类型列表
-  private node!: node; // 被选中的节点
+  private node: DataPropNode = {label:"",entityClass:[],dataType:""}; // 被选中的节点
   private entityList: any[] = []; // 实体类树
   private sortValueBy: string = "LEVEL"; // 选项排序方式（"ORDER_SELECTED"，"LEVEL"，"INDEX"）
 
@@ -142,14 +119,10 @@ export default class DataProp extends Vue {
       }
     ];
   }
-  private handleClick(data: node) {
+  private handleClick(data: any) {
     // 点击节点编辑
     this.node = data;
     this.formVisable = true;
-    console.log(data);
-    this.dataProp.name = data.label;
-    this.dataProp.entityClass = data.entityClass;
-    this.dataProp.dataType = data.dataType;
     const input = this.$refs.nodeName as any;
     input.focus();
   }
@@ -161,8 +134,8 @@ export default class DataProp extends Vue {
 
   private append(data: any) {
     // 新增子节点
-    const newChild: node = {
-      id: this.getUUID(),
+    const newChild: DataPropNode = {
+      id: getUUID(),
       label: "空节点",
       children: [],
       entityClass: [],
@@ -183,29 +156,16 @@ export default class DataProp extends Vue {
     this.formVisable = false;
   }
 
-  private getUUID() {
-    // 生成唯一标示符
-    const s: any = [];
-    const hexDigits = "0123456789abcdef";
-    for (var i = 0; i < 36; i++) {
-      s[i] = hexDigits.substr(Math.floor(Math.random() * 0x10), 1);
-    }
-    s[14] = "4"; // bits 12-15 of the time_hi_and_version field to 0010
-    s[8] = s[13] = s[18] = s[23] = "";
-    const uuid = s.join("");
-    return uuid;
-  }
-
   private addTopNode() {
     // 新增顶层节点
-    const node: node = {
-      id: this.getUUID(),
+    const node: DataPropNode = {
+      id: getUUID(),
       label: "空节点",
       children: [],
       entityClass: [],
       dataType: ""
     };
-    this.dataPropTree.unshift(node);
+    this.dataProp.dataPropList.unshift(node);
   }
 
   private editNode(val: any) {
