@@ -1,8 +1,11 @@
 <template>
   <div class="header">
     <div>
-      <el-button type="primary" @click="addTopNode">新增顶层节点</el-button>
-      <el-button type="success" @click="save">保存</el-button>
+      <el-select v-model="thing" placeholder="请选择" @change="selectThing">
+        <el-option v-for="item in things" :key="item.id" :label="item.name" :value="item.id"></el-option>
+      </el-select>
+      <el-button v-if="thing!=''" type="primary" @click="addTopNode">新增顶层节点</el-button>
+      <el-button v-if="thing!=''" type="success" @click="save">保存</el-button>
     </div>
     <el-row>
       <el-col :span="8">
@@ -48,7 +51,7 @@
           <span>关系:</span>
           <el-button size="mini" type="success" @click="addOneRelationship" icon="el-icon-plus"></el-button>
         </div>
-        <div class="treeselect" v-for="(item,index) in node.relationship" :key="index">
+        <div class="treeselect" v-for="(item,index) in node.relation" :key="index">
           <treeselect
             v-model="item.domain"
             valueFormat="object"
@@ -90,42 +93,52 @@ import ObjectPropModel, {
   Relation
 } from "../../api/model/ObjectPropModel";
 import { getUUID } from "@/util/uuid";
+import EntityAPIImpl from '@/api/impl/EntityAPIImpl';
 
 @Component({ components: { Treeselect } })
 export default class ObjectProp extends Vue {
   private formVisable: boolean = false;
   private objectProp: ObjectPropModel = new ObjectPropModel();
   private entityList: any[] = []; // 实体类树
-  private node: ObjectPropNode = { label: "", relationship: [] }; // 被选中的节点
+  private node: ObjectPropNode = { label: "", relation: [] }; // 被选中的节点
+  private thing: string = ""; // 选中thingId
+  private things: any[] = []; // thing下拉数据
   private sortValueBy: string = "LEVEL"; // 选项排序方式（"ORDER_SELECTED"，"LEVEL"，"INDEX"）
+  private entityAPI = new EntityAPIImpl();
 
   private mounted() {
-    // 初始化实体类树
-    this.entityList = [
-      {
-        id: 1,
-        label: "人",
-        children: [
-          {
-            id: 11,
-            label: "驾驶员"
-          },
-          {
-            id: 12,
-            label: "行人"
-          }
-        ]
-      },
-      {
-        id: 2,
-        label: "车"
-      },
-      {
-        id: 3,
-        label: "交通标志"
-      }
-    ];
+    // 初始化
+    this.getThing();
   }
+
+  private getThing() {
+    // 获取thing
+    this.entityAPI.getThing().then(({ data }) => {
+      this.things = data;
+    });
+  }
+
+  private selectThing(val: string) {
+    this.objectProp.thingId = val;
+    // 选择thing查找class
+    this.getObjectProp();
+    this.getEntityList();
+  }
+
+  private getObjectProp() {
+    // 获取数据属性
+    this.entityAPI.getObjectProp(this.thing).then(({ data }) => {
+      if (data) this.objectProp = data;
+    });
+  }
+
+  private getEntityList() {
+    // 获取实体类树
+    this.entityAPI.getClass(this.thing).then(({ data }) => {
+      if (data) this.entityList = data.entityList;
+    });
+  }
+
   private handleClick(data: ObjectPropNode) {
     // 点击树节点
     this.node = data;
@@ -145,7 +158,7 @@ export default class ObjectProp extends Vue {
       id: getUUID(),
       label: "空节点",
       children: [],
-      relationship: []
+      relation: []
     };
     if (!data.children) {
       this.$set(data, "children", []);
@@ -168,7 +181,7 @@ export default class ObjectProp extends Vue {
       id: getUUID(),
       label: "空节点",
       children: [],
-      relationship: []
+      relation: []
     };
     this.objectProp.objectPropList.unshift(node);
   }
@@ -178,18 +191,22 @@ export default class ObjectProp extends Vue {
     this.node.label = val;
   }
 
-  private save() {}
-
   private addOneRelationship() {
     // 新增一条关系
     const rel: Relation = { domain: [], range: [] };
-    this.node.relationship.push(rel);
+    this.node.relation.push(rel);
   }
 
   private removeOneRelationship(index: number) {
     // 删除当前关系
-    this.node.relationship.splice(index, 1);
+    this.node.relation.splice(index, 1);
   }
+
+  private save() {
+    // 保存关系属性树
+    this.entityAPI.creatOrUpdateObjectProp(this.objectProp);
+  }
+
 }
 </script>
 

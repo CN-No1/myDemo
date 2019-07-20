@@ -33,7 +33,7 @@
           <span>节点名称:</span>
           <el-input
             ref="nodeName"
-            v-model="dataType.name"
+            v-model="node.label"
             @input="editNode"
             @focus="inputFocus($event)"
           ></el-input>
@@ -45,37 +45,34 @@
 
 <script lang="ts">
 import { Component, Vue } from "vue-property-decorator";
-
-interface dataType {
-  // 数据类型对象
-  name: string;
-}
+import DataTypeModel from "../../api/model/DataTypeModel";
+import EntityAPIImpl from '@/api/impl/EntityAPIImpl';
 
 @Component({
   components: {}
 })
 export default class DataType extends Vue {
   private formVisable: boolean = false;
-  private dataType: dataType = { name: "" };
-  private dataTypeTree: any[] = [
-    {
-      id: "1",
-      label: "一级 1",
-      children: [],
-      entityClass: [],
-      dataType: ""
-    }
-  ];
-  private node: any;
+  private dataTypeTree: DataTypeModel[] = [];
+  private node: DataTypeModel = { label: "" };
+  private entityAPI = new EntityAPIImpl();
 
-  private mounted() {}
+  private mounted() {
+    // 初始化
+    this.getDataType();
+  }
+
+  private getDataType() {
+    // 获取数据类型树
+    this.entityAPI.getDataType().then(({data}) => {
+      this.dataTypeTree = data;
+    })
+  }
 
   private handleClick(data: any) {
     // 点击节点
     this.node = data;
     this.formVisable = true;
-    console.log(data);
-    this.dataType.name = data.label;
     const input = this.$refs.nodeName as any;
     input.focus();
   }
@@ -109,7 +106,7 @@ export default class DataType extends Vue {
 
   private addTopNode() {
     // 新增顶层节点
-    const node = { id: this.getUUID(), label: "空节点", children: [] };
+    const node = { id: this.getUUID(), label: "空节点" };
     this.dataTypeTree.unshift(node);
   }
 
@@ -118,7 +115,10 @@ export default class DataType extends Vue {
     this.node.label = val;
   }
 
-  private save() {}
+  private save() {
+    // 保存数据类型树
+    this.entityAPI.creatOrUpdateDataType(this.dataTypeTree);
+  }
 }
 </script>
 

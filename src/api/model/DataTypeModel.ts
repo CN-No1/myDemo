@@ -1,6 +1,6 @@
 class DataTypeModel {
     public id?: string;
-    public type?: string;
+    public label?: string;
 }
 
 export default DataTypeModel;

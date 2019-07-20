@@ -1,8 +1,11 @@
 <template>
   <div class="header">
     <div>
-      <el-button type="primary" @click="addTopNode">新增顶层节点</el-button>
-      <el-button type="success" @click="save">保存</el-button>
+      <el-select v-model="thing" placeholder="请选择" @change="selectThing">
+        <el-option v-for="item in things" :key="item.id" :label="item.name" :value="item.id"></el-option>
+      </el-select>
+      <el-button v-if="thing!=''" type="primary" @click="addTopNode">新增顶层节点</el-button>
+      <el-button v-if="thing!=''" type="success" @click="save">保存</el-button>
     </div>
     <el-row>
       <el-col :span="8">
@@ -61,8 +64,8 @@
             <el-option
               v-for="(item,index) in dataTypeList"
               :key="index"
-              :label="item.name"
-              :value="item.name"
+              :label="item.label"
+              :value="item.label"
             ></el-option>
           </el-select>
         </div>
@@ -76,6 +79,7 @@ import { Vue, Component } from "vue-property-decorator";
 import Treeselect from "@riophae/vue-treeselect";
 import DataPropModel,{ DataPropNode } from '../../api/model/DataPropModel';
 import { getUUID } from '@/util/uuid';
+import EntityAPIImpl from '@/api/impl/EntityAPIImpl';
 
 @Component({ components: { Treeselect } })
 export default class DataProp extends Vue {
@@ -83,42 +87,53 @@ export default class DataProp extends Vue {
   private dataProp: DataPropModel = new DataPropModel(); // 数据属性对象
   private dataTypeList: any[] = []; // 数据类型列表
   private node: DataPropNode = {label:"",entityClass:[],dataType:""}; // 被选中的节点
+  private thing: string = ""; // 选中thingId
+  private things: any[] = []; // thing下拉数据
   private entityList: any[] = []; // 实体类树
   private sortValueBy: string = "LEVEL"; // 选项排序方式（"ORDER_SELECTED"，"LEVEL"，"INDEX"）
+  private entityAPI = new EntityAPIImpl();
 
   private mounted() {
-    // 初始化实体类树、数据类型列表
-    this.entityList = [
-      {
-        id: 1,
-        label: "人",
-        children: [
-          {
-            id: 11,
-            label: "驾驶员"
-          },
-          {
-            id: 12,
-            label: "行人"
-          }
-        ]
-      },
-      {
-        id: 2,
-        label: "车"
-      },
-      {
-        id: 3,
-        label: "交通标志"
-      }
-    ];
-    this.dataTypeList = [
-      {
-        id: "1",
-        name: "string"
-      }
-    ];
+    // 初始化
+    this.getThing();
   }
+
+  private getThing() {
+    // 获取thing
+    this.entityAPI.getThing().then(({ data }) => {
+      this.things = data;
+    });
+  }
+
+  private selectThing(val: string) {
+    this.dataProp.thingId = val;
+    // 选择thing查找class
+    this.getDataProp();
+    this.getEntityList();
+    this.getDataTypeList();
+  }
+  
+  private getDataProp() {
+    // 获取对象属性
+    this.entityAPI.getDataProp(this.thing).then(({ data }) => {
+      if (data) this.dataProp = data;
+    });
+  }
+
+  private getEntityList() {
+    // 获取实体类树
+    this.entityAPI.getClass(this.thing).then(({ data }) => {
+      if (data) this.entityList = data.entityList;
+    });
+  }
+
+  private getDataTypeList() {
+    // 获取数据类型list
+    this.entityAPI.getDataType().then(({ data }) => {
+      if (data) this.dataTypeList = data;
+    });
+  }
+
   private handleClick(data: any) {
     // 点击节点编辑
     this.node = data;
@@ -173,7 +188,10 @@ export default class DataProp extends Vue {
     this.node.label = val;
   }
 
-  private save() {}
+  private save() {
+    // 保存数据属性树
+    this.entityAPI.creatOrUpdateDataProp(this.dataProp);
+  }
 }
 </script>
 

@@ -88,7 +88,7 @@ export default class Entity extends Vue {
   }
 
   private getClass() {
-    // 获取实体类树
+    // 获取实体类
     this.entityAPI.getClass(this.thing).then(({ data }) => {
       if (data) this.entityClass = data;
     });
@@ -146,7 +146,7 @@ export default class Entity extends Vue {
 
   private save() {
     // 保存实体树
-    this.entityAPI.updateClass(this.entityClass);
+    this.entityAPI.creatOrUpdateClass(this.entityClass);
   }
 }
 </script>

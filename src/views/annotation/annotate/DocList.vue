@@ -5,9 +5,6 @@
       <el-table-column
         prop="module"
         label="标签"
-        :filters="moduleList"
-        :filter-method="filterTag"
-        filter-placement="bottom-end"
       >
         <template slot-scope="scope">
           <el-tag close-transition>{{scope.row.moduleName}}</el-tag>

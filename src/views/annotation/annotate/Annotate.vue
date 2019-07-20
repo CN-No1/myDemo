@@ -53,16 +53,8 @@ import { Vue, Component } from "vue-property-decorator";
 import Annotator from "../../../components/Annotator.vue";
 import Treeselect from "@riophae/vue-treeselect";
 import "@riophae/vue-treeselect/dist/vue-treeselect.css";
+import { Position } from '../../../api/model/AnnotationModel';
 
-interface Position {
-  //  定位对象
-  id?: string;
-  value: string;
-  entityId: string;
-  startOffset: number;
-  endOffset: number;
-  entity: string;
-}
 
 @Component({
   components: { Annotator, Treeselect }

@@ -1,4 +1,4 @@
-class Annotation {
+class AnnotationModel {
     public id?: string;
     public docId?: string;
     public positionList?: Position[];
@@ -12,4 +12,4 @@ export interface Position {
     endOffset: number;
     entity: string;
 }
-export default Annotation;
+export default AnnotationModel;

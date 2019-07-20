@@ -16,7 +16,7 @@ export interface ObjectPropNode {
     id?: string;
     label?: string;
     children?: ObjectPropNode[];
-    relationship: Relation[];
+    relation: Relation[];
 }
 
 export interface Relation　{
