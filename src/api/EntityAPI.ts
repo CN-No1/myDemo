@@ -4,15 +4,15 @@ import ObjectPropModel from "./model/ObjectPropModel";
 import DataTypeModel from "./model/DataTypeModel";
 
 interface EntityAPI {
-    getClass(thingId: string): Promise<any>;
+    getClass(moduleId: string): Promise<any>;
 
-    getThing(): Promise<any>;
+    getModule(): Promise<any>;
 
-    getDataProp(thingId: string): Promise<any>;
+    getDataProp(moduleId: string): Promise<any>;
 
-    getObjectProp(thingId: string): Promise<any>;
+    getObjectProp(moduleId: string): Promise<any>;
 
-    getDataType(thingId: string): Promise<any>;
+    getDataType(moduleId: string): Promise<any>;
 
     creatOrUpdateClass(entityClass: EntityClassModel): Promise<any>;
 

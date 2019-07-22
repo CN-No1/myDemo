@@ -1,10 +1,10 @@
 class EntityClassModel {
     public id?: string;
-    public thingId?: string;
+    public moduleId?: string;
     public entityList!: EntityClassNode[];
     constructor() {
         this.id = "";
-        this.thingId = "";
+        this.moduleId = "";
         this.entityList = [];
     }
 }

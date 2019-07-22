@@ -1,7 +1,13 @@
 class AnnotationModel {
     public id?: string;
     public docId?: string;
-    public positionList?: Position[];
+    public positionList!: Position[];
+
+    constructor() {
+        this.id = "";
+        this.docId = "";
+        this.positionList = [];
+    }
 }
 
 export interface Position {

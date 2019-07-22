@@ -1,9 +1,9 @@
 import EntityAPI from "../EntityAPI";
 import BaseAPI from "../api";
 import EntityClassModel from "../model/EntityClassModel";
-import DataPropModel from '../model/DataPropModel';
-import ObjectPropModel from '../model/ObjectPropModel';
-import DataTypeModel from '../model/DataTypeModel';
+import DataPropModel from "../model/DataPropModel";
+import ObjectPropModel from "../model/ObjectPropModel";
+import DataTypeModel from "../model/DataTypeModel";
 
 class EntityAPIImpl extends BaseAPI implements EntityAPI {
 
@@ -12,20 +12,20 @@ class EntityAPIImpl extends BaseAPI implements EntityAPI {
         this.instance.defaults.baseURL = "/api/entity";
     }
 
-    public async getClass(thingId: string): Promise<any> {
-        return await this.instance.get("getClasses?id=" + thingId);
+    public async getClass(moduleId?: string): Promise<any> {
+        return await this.instance.get("getClasses?id=" + moduleId);
     }
 
-    public async getThing(): Promise<any> {
-        return await this.instance.get("getThing");
+    public async getModule(): Promise<any> {
+        return await this.instance.get("getModule");
     }
 
-    public async getDataProp(thingId: string): Promise<any> {
-        return await this.instance.get("getDataProp?id=" + thingId);
+    public async getDataProp(moduleId: string): Promise<any> {
+        return await this.instance.get("getDataProp?id=" + moduleId);
     }
 
-    public async getObjectProp(thingId: string): Promise<any> {
-        return await this.instance.get("getObjectProp?id=" + thingId);
+    public async getObjectProp(moduleId: string): Promise<any> {
+        return await this.instance.get("getObjectProp?id=" + moduleId);
     }
 
     public async getDataType(): Promise<any> {

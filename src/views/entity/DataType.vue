@@ -45,7 +45,7 @@
 
 <script lang="ts">
 import { Component, Vue } from "vue-property-decorator";
-import DataTypeModel from "../../api/model/DataTypeModel";
+import DataTypeModel from "@/api/model/DataTypeModel";
 import EntityAPIImpl from '@/api/impl/EntityAPIImpl';
 
 @Component({

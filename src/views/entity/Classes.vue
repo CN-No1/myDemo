@@ -1,11 +1,11 @@
 <template>
   <div class="header">
     <div>
-      <el-select v-model="thing" placeholder="请选择" @change="selectThing">
-        <el-option v-for="item in things" :key="item.id" :label="item.name" :value="item.id"></el-option>
+      <el-select v-model="module" placeholder="请选择模块" @change="selectmodule">
+        <el-option v-for="item in modules" :key="item.id" :label="item.name" :value="item.id"></el-option>
       </el-select>
-      <el-button v-if="thing!=''" type="primary" @click="addTopNode">新增顶层节点</el-button>
-      <el-button v-if="thing!=''" type="success" @click="save">保存</el-button>
+      <el-button v-if="module!=''" type="primary" @click="addTopNode">新增顶层节点</el-button>
+      <el-button v-if="module!=''" type="success" @click="save">保存</el-button>
     </div>
     <el-row>
       <el-col :span="8">
@@ -54,43 +54,45 @@
 
 <script lang="ts">
 import { Vue, Component } from "vue-property-decorator";
-import EntityAPIImpl from "../../api/impl/EntityAPIImpl";
+import EntityAPIImpl from "@/api/impl/EntityAPIImpl";
 import EntityClassModel, {
   EntityClassNode
-} from "../../api/model/EntityClassModel";
-import { getUUID } from "../../util/uuid";
+} from "@/api/model/EntityClassModel";
+import { getUUID } from "@/util/uuid";
 
 @Component({})
 export default class Entity extends Vue {
   private formVisable: boolean = false;
   private entityClass: EntityClassModel = new EntityClassModel();
   private node: EntityClassNode = { label: "" }; // 节点临时对象，用于动态修改树节点展示
-  private thing: string = ""; // 选中thingId
-  private things: any[] = []; // thing下拉数据
+  private module: string = ""; // 选中moduleId
+  private modules: any[] = []; // module下拉数据
   private entityAPI = new EntityAPIImpl();
 
   private mounted() {
     // 初始化
-    this.getThing();
+    this.getModule();
   }
 
-  private selectThing(val: string) {
-    this.entityClass.thingId = val;
-    // 选择thing查找class
+  private selectmodule(val: string) {
+    this.entityClass.moduleId = val;
+    // 选择module查找class
     this.getClass();
   }
 
-  private getThing() {
-    // 获取thing
-    this.entityAPI.getThing().then(({ data }) => {
-      this.things = data;
+  private getModule() {
+    // 获取module
+    this.entityAPI.getModule().then(({ data }: any) => {
+      this.modules = data;
     });
   }
 
   private getClass() {
     // 获取实体类
-    this.entityAPI.getClass(this.thing).then(({ data }) => {
-      if (data) this.entityClass = data;
+    this.entityAPI.getClass(this.module).then(({ data }) => {
+      if (data) {
+        this.entityClass = data;
+      }
     });
   }
 

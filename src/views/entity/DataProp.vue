@@ -1,11 +1,11 @@
 <template>
   <div class="header">
     <div>
-      <el-select v-model="thing" placeholder="请选择" @change="selectThing">
-        <el-option v-for="item in things" :key="item.id" :label="item.name" :value="item.id"></el-option>
+      <el-select v-model="module" placeholder="请选择模块" @change="selectmodule">
+        <el-option v-for="item in modules" :key="item.id" :label="item.name" :value="item.id"></el-option>
       </el-select>
-      <el-button v-if="thing!=''" type="primary" @click="addTopNode">新增顶层节点</el-button>
-      <el-button v-if="thing!=''" type="success" @click="save">保存</el-button>
+      <el-button v-if="module!=''" type="primary" @click="addTopNode">新增顶层节点</el-button>
+      <el-button v-if="module!=''" type="success" @click="save">保存</el-button>
     </div>
     <el-row>
       <el-col :span="8">
@@ -77,7 +77,7 @@
 <script lang="ts">
 import { Vue, Component } from "vue-property-decorator";
 import Treeselect from "@riophae/vue-treeselect";
-import DataPropModel,{ DataPropNode } from '../../api/model/DataPropModel';
+import DataPropModel,{ DataPropNode } from '@/api/model/DataPropModel';
 import { getUUID } from '@/util/uuid';
 import EntityAPIImpl from '@/api/impl/EntityAPIImpl';
 
@@ -87,27 +87,27 @@ export default class DataProp extends Vue {
   private dataProp: DataPropModel = new DataPropModel(); // 数据属性对象
   private dataTypeList: any[] = []; // 数据类型列表
   private node: DataPropNode = {label:"",entityClass:[],dataType:""}; // 被选中的节点
-  private thing: string = ""; // 选中thingId
-  private things: any[] = []; // thing下拉数据
+  private module: string = ""; // 选中moduleId
+  private modules: any[] = []; // module下拉数据
   private entityList: any[] = []; // 实体类树
   private sortValueBy: string = "LEVEL"; // 选项排序方式（"ORDER_SELECTED"，"LEVEL"，"INDEX"）
   private entityAPI = new EntityAPIImpl();
 
   private mounted() {
     // 初始化
-    this.getThing();
+    this.getModule();
   }
 
-  private getThing() {
-    // 获取thing
-    this.entityAPI.getThing().then(({ data }) => {
-      this.things = data;
+  private getModule() {
+    // 获取module
+    this.entityAPI.getModule().then(({ data }) => {
+      this.modules = data;
     });
   }
 
-  private selectThing(val: string) {
-    this.dataProp.thingId = val;
-    // 选择thing查找class
+  private selectmodule(val: string) {
+    this.dataProp.moduleId = val;
+    // 选择module查找class
     this.getDataProp();
     this.getEntityList();
     this.getDataTypeList();
@@ -115,14 +115,14 @@ export default class DataProp extends Vue {
   
   private getDataProp() {
     // 获取对象属性
-    this.entityAPI.getDataProp(this.thing).then(({ data }) => {
+    this.entityAPI.getDataProp(this.module).then(({ data }) => {
       if (data) this.dataProp = data;
     });
   }
 
   private getEntityList() {
     // 获取实体类树
-    this.entityAPI.getClass(this.thing).then(({ data }) => {
+    this.entityAPI.getClass(this.module).then(({ data }) => {
       if (data) this.entityList = data.entityList;
     });
   }

@@ -2,11 +2,11 @@ import EntityClass from "./EntityClassModel";
 class DataPropModel {
     // 数据属性对象
     public id?: string;
-    public thingId?: string;
+    public moduleId?: string;
     public dataPropList!: DataPropNode[];
     constructor() {
         this.id = "";
-        this.thingId = "";
+        this.moduleId = "";
         this.dataPropList = [];
     }
 }

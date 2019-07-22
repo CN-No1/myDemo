@@ -1,11 +1,11 @@
 <template>
   <div class="header">
     <div>
-      <el-select v-model="thing" placeholder="请选择" @change="selectThing">
-        <el-option v-for="item in things" :key="item.id" :label="item.name" :value="item.id"></el-option>
+      <el-select v-model="module" placeholder="请选择" @change="selectmodule">
+        <el-option v-for="item in modules" :key="item.id" :label="item.name" :value="item.id"></el-option>
       </el-select>
-      <el-button v-if="thing!=''" type="primary" @click="addTopNode">新增顶层节点</el-button>
-      <el-button v-if="thing!=''" type="success" @click="save">保存</el-button>
+      <el-button v-if="module!=''" type="primary" @click="addTopNode">新增顶层节点</el-button>
+      <el-button v-if="module!=''" type="success" @click="save">保存</el-button>
     </div>
     <el-row>
       <el-col :span="8">
@@ -91,7 +91,7 @@ import "@riophae/vue-treeselect/dist/vue-treeselect.css";
 import ObjectPropModel, {
   ObjectPropNode,
   Relation
-} from "../../api/model/ObjectPropModel";
+} from "@/api/model/ObjectPropModel";
 import { getUUID } from "@/util/uuid";
 import EntityAPIImpl from '@/api/impl/EntityAPIImpl';
 
@@ -101,40 +101,40 @@ export default class ObjectProp extends Vue {
   private objectProp: ObjectPropModel = new ObjectPropModel();
   private entityList: any[] = []; // 实体类树
   private node: ObjectPropNode = { label: "", relation: [] }; // 被选中的节点
-  private thing: string = ""; // 选中thingId
-  private things: any[] = []; // thing下拉数据
+  private module: string = ""; // 选中moduleId
+  private modules: any[] = []; // module下拉数据
   private sortValueBy: string = "LEVEL"; // 选项排序方式（"ORDER_SELECTED"，"LEVEL"，"INDEX"）
   private entityAPI = new EntityAPIImpl();
 
   private mounted() {
     // 初始化
-    this.getThing();
+    this.getModule();
   }
 
-  private getThing() {
-    // 获取thing
-    this.entityAPI.getThing().then(({ data }) => {
-      this.things = data;
+  private getModule() {
+    // 获取module
+    this.entityAPI.getModule().then(({ data }) => {
+      this.modules = data;
     });
   }
 
-  private selectThing(val: string) {
-    this.objectProp.thingId = val;
-    // 选择thing查找class
+  private selectmodule(val: string) {
+    this.objectProp.moduleId = val;
+    // 选择module查找class
     this.getObjectProp();
     this.getEntityList();
   }
 
   private getObjectProp() {
     // 获取数据属性
-    this.entityAPI.getObjectProp(this.thing).then(({ data }) => {
+    this.entityAPI.getObjectProp(this.module).then(({ data }) => {
       if (data) this.objectProp = data;
     });
   }
 
   private getEntityList() {
     // 获取实体类树
-    this.entityAPI.getClass(this.thing).then(({ data }) => {
+    this.entityAPI.getClass(this.module).then(({ data }) => {
       if (data) this.entityList = data.entityList;
     });
   }
