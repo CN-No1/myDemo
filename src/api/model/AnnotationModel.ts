@@ -12,10 +12,10 @@ class AnnotationModel {
 
 export interface Position {
     //  定位对象
-    value: string;
-    entityId: string;
-    startOffset: number;
-    endOffset: number;
-    entity: string;
+    value?: string;
+    entityId?: string;
+    startOffset?: number;
+    endOffset?: number;
+    entity?: string;
 }
 export default AnnotationModel;

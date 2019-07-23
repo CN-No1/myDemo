@@ -82,7 +82,9 @@ export default class Annotate extends Vue {
   private sortValueBy: string = "LEVEL"; // 选项排序方式（"ORDER_SELECTED"，"LEVEL"，"INDEX"）
   private annotationAPI = new AnnotationAPIImpl();
   private entityAPI = new EntityAPIImpl();
+  private doneEdit: boolean = false; // 页面是否有修改
   $confirm: any;
+  $message: any;
 
   private mounted() {
     // 初始化
@@ -132,7 +134,7 @@ export default class Annotate extends Vue {
     const ref = this.$refs.annotator as any;
     ref.addLabel();
     this.handleClose();
-    // console.log(this.entityArr)
+    this.doneEdit = true;
   }
 
   private addLabel(offset: any) {
@@ -177,31 +179,45 @@ export default class Annotate extends Vue {
 
   private goBack() {
     // 返回
-    this.$confirm(
-      "检测到未保存的内容，是否在离开页面前保存修改？",
-      "确认信息",
-      {
-        distinguishCancelAndClose: true,
-        confirmButtonText: "保存",
-        cancelButtonText: "放弃修改"
-      }
-    )
-      .then(() => {
-        this.save();
-        this.$router.back();
-      })
-      .catch((action: any) => {
-        if(action === 'cancel'){
-          this.$router.back();
+    if (this.doneEdit) {
+      this.$confirm(
+        "检测到未保存的内容，是否在离开页面前保存修改？",
+        "确认信息",
+        {
+          distinguishCancelAndClose: true,
+          confirmButtonText: "保存",
+          cancelButtonText: "放弃修改"
         }
-      });
+      )
+        .then(() => {
+          this.save();
+          this.$router.back();
+        })
+        .catch((action: any) => {
+          if (action === "cancel") {
+            this.$router.back();
+          }
+        });
+    } else {
+      this.$router.back();
+    }
   }
 
   private saveAll() {
     // 保存标注信息
     this.annotation.positionList = this.entityPosition;
     this.annotation.docId = this.doc.id;
-    this.annotationAPI.createOrUpdateAnnotation(this.annotation)
+    this.annotationAPI
+      .createOrUpdateAnnotation(this.annotation)
+      .then((res: any) => {
+        if (res.code === 0) {
+          this.$message({
+            message: "保存成功！",
+            type: "success"
+          });
+          this.$router.push({ name: "docList" });
+        }
+      });
   }
 
   private next() {
