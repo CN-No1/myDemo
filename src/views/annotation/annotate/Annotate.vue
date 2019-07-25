@@ -1,11 +1,6 @@
 <template>
-  <div>
-    <div>
-      <el-button @click="goBack()">返回</el-button>
-      <el-button type="success" @click="saveAll()">保存</el-button>
-      <el-button @click="next()">下一个</el-button>
-    </div>
-    <div class="content">
+  <el-form ref="form" label-width="180px" v-loading="loading">
+    <el-form-item label="标注问题：">
       <annotator
         ref="annotator"
         :doc="doc.content"
@@ -14,52 +9,46 @@
         @addLabel="addLabel"
         @showDetail="showDetail"
       ></annotator>
-    </div>
-    <div class="table">
-      <el-table
-        :data="entityPosition"
-        style="width: 100%"
-        :default-sort="{prop: 'value', order: 'descending'}"
-      >
-        <el-table-column prop="value" sortable label="标注内容"></el-table-column>
-        <el-table-column prop="entity" sortable label="关联实体"></el-table-column>
+    </el-form-item>
+    <el-form-item label="标记词汇 | 属性：">
+      <div class="annotator" v-if="seletedWord">
+        <b style="color:red;">{{text}}</b>
+        <treeselect
+          v-model="entityArr"
+          valueFormat="object"
+          :multiple="true"
+          :options="entityList"
+          :searchable="true"
+          :sort-value-by="sortValueBy"
+          :flat="true"
+          placeholder="请选择文本所属实体"
+        />
+        <span slot="footer" class="dialog-footer">
+          <el-button type="primary" @click="save">确 定</el-button>
+        </span>
+      </div>
+    </el-form-item>
+    <el-form-item label="已标注：">
+      <el-table :data="entityPosition" style="width: 100%" :header-cell-style="rowStyle" :row-style="rowStyle">
+        <el-table-column prop="value" label="文本" width="180"></el-table-column>
+        <el-table-column prop="entity" label="关联实体" width="180"></el-table-column>
         <el-table-column label="操作">
           <template slot-scope="scope">
-            <el-button type="danger" @click="deleteRel(scope.$index)">删除</el-button>
+            <el-button type="danger" icon="el-icon-delete" circle @click="deleteRow(scope)"></el-button>
           </template>
         </el-table-column>
       </el-table>
-    </div>
-    <el-dialog
-      title="标注"
-      :visible.sync="dialogVisible"
-      width="30%"
-      :before-close="handleClose"
-      :close-on-click-modal="false"
-    >
-      <h3>标注文本：</h3>
-      <div>{{text}}</div>
-      <h3>所属实体：</h3>
-      <treeselect
-        v-model="entityArr"
-        valueFormat="object"
-        :multiple="true"
-        :options="entityList"
-        :searchable="true"
-        :sort-value-by="sortValueBy"
-        :flat="true"
-        placeholder="请选择文本所属实体"
-      />
-      <span slot="footer" class="dialog-footer">
-        <el-button @click="handleClose">取 消</el-button>
-        <el-button type="primary" @click="save">确 定</el-button>
-      </span>
-    </el-dialog>
-  </div>
+    </el-form-item>
+    <el-form-item>
+      <el-button type="success" @click="saveAll()">保存</el-button>
+      <!-- <el-button @click="prev()">上一个</el-button>
+      <el-button @click="next()">下一个</el-button> -->
+    </el-form-item>
+  </el-form>
 </template>
 
 <script lang="ts">
-import { Vue, Component } from "vue-property-decorator";
+import { Vue, Component, Prop, Watch } from "vue-property-decorator";
 import Annotator from "@/components/Annotator.vue";
 import Treeselect from "@riophae/vue-treeselect";
 import "@riophae/vue-treeselect/dist/vue-treeselect.css";
@@ -72,6 +61,17 @@ import EntityAPIImpl from "@/api/impl/EntityAPIImpl";
   components: { Annotator, Treeselect }
 })
 export default class Annotate extends Vue {
+  @Prop()
+  private editDoc!: DocModel;
+
+  @Watch("editDoc", { immediate: true, deep: true })
+  private docChange(newVal: any, oldVal: any) {
+    this.doc = newVal;
+    this.init();
+    this.getEntityList();
+    this.getAnnotation();
+  }
+
   private doc: DocModel = { content: "" }; //  文档对象
   private annotation = new AnnotationModel();
   private entityPosition: Position[] = []; // 标注位置
@@ -83,21 +83,22 @@ export default class Annotate extends Vue {
   private annotationAPI = new AnnotationAPIImpl();
   private entityAPI = new EntityAPIImpl();
   private doneEdit: boolean = false; // 页面是否有修改
+  private seletedWord: boolean = false; // 是否选中一个单词
+  private loading: boolean = true;
   $confirm: any;
   $message: any;
 
-  private mounted() {
-    // 初始化
-    this.getDocById(this.$route.params.docId);
+  private rowStyle(){
+    return "background-color: aliceblue;"
   }
 
-  private getDocById(id: string) {
-    // 获取文档对象
-    this.annotationAPI.getDocById(id).then(({ data }: any) => {
-      this.doc = data;
-      this.getEntityList();
-      this.getAnnotation();
-    });
+  private init() {
+    // 初始化
+    this.loading = true;
+    this.seletedWord = false;
+    this.text = "";
+    this.entityArr = [];
+    this.entityPosition = [];
   }
 
   private getEntityList() {
@@ -111,48 +112,39 @@ export default class Annotate extends Vue {
     // 获取文本位置信息
     this.annotationAPI.getAnnotation(this.doc.id).then(({ data }) => {
       if (data) this.entityPosition = data.positionList;
+      this.loading = false;
     });
   }
 
   private getRangeData(text: string) {
+    // 选中文本
     if (text === "") {
       return;
     }
-    // 选中文本
-    this.dialogVisible = true;
+    this.seletedWord = true;
     this.text = text;
-  }
-
-  private handleClose() {
-    // 关闭对话框
     this.entityArr = [];
-    this.dialogVisible = false;
   }
 
   private save() {
-    // 保存
+    // 暂存到页面
     const ref = this.$refs.annotator as any;
     ref.addLabel();
-    this.handleClose();
     this.doneEdit = true;
   }
 
   private addLabel(offset: any) {
+    // 添加标注点
+    this.entityPosition = [];
     this.entityArr.map(item => {
-      // debugger
-      const arr = this.entityPosition.filter(
-        e => e.value === item.label && e.entityId === item.id
-      );
-      if (arr.length === 0) {
-        const newLabel: Position = {
-          startOffset: offset.startOffset,
-          endOffset: offset.endOffset,
-          value: this.text,
-          entityId: item.id,
-          entity: item.label
-        };
-        this.entityPosition.push(newLabel);
-      }
+      const newLabel: Position = {
+        startOffset: offset.startOffset,
+        endOffset: offset.endOffset,
+        value: this.text,
+        entityId: item.id,
+        entity: item.label
+      };
+      this.entityPosition.push(newLabel);
     });
     // console.log(this.entityArr)
   }
@@ -163,6 +155,9 @@ export default class Annotate extends Vue {
   }
 
   private showDetail(value: string) {
+    // 编辑标注点
+    this.seletedWord = true;
+    this.entityArr = [];
     const innerTableData = this.entityPosition.filter(
       item => item.value === value
     );
@@ -174,10 +169,9 @@ export default class Annotate extends Vue {
       };
       this.entityArr.push(obj);
     });
-    this.dialogVisible = true;
   }
 
-  private goBack() {
+  private saveChange() {
     // 返回
     if (this.doneEdit) {
       this.$confirm(
@@ -190,7 +184,7 @@ export default class Annotate extends Vue {
         }
       )
         .then(() => {
-          this.save();
+          this.saveAll();
           this.$router.back();
         })
         .catch((action: any) => {
@@ -201,6 +195,12 @@ export default class Annotate extends Vue {
     } else {
       this.$router.back();
     }
+  }
+
+  private deleteRow(row: any) {
+    // 删除一行
+    this.entityPosition.splice(row.$index,1)
+    this.entityArr = this.entityArr.filter(item=>item.id!=row.row.entityId)
   }
 
   private saveAll() {
@@ -215,13 +215,16 @@ export default class Annotate extends Vue {
             message: "保存成功！",
             type: "success"
           });
-          this.$router.push({ name: "docList" });
         }
       });
   }
 
   private next() {
     // 下一条
+  }
+
+  private prev() {
+    // 上一条
   }
 }
 </script>
@@ -230,5 +233,14 @@ export default class Annotate extends Vue {
 .content {
   padding: 20px;
   line-height: 34px;
+}
+.annotator {
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  line-height: 25px;
+}
+.vue-treeselect {
+  width: 350px;
 }
 </style>

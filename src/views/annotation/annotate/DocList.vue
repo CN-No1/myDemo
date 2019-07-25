@@ -1,49 +1,115 @@
 <template>
   <div>
     <div class="header">
-      <el-select v-model="moduleId" placeholder="请选择模块" @change="selectModule">
-        <el-option v-for="item in modules" :key="item.id" :label="item.name" :value="item.id"></el-option>
-      </el-select>
-      <el-select v-model="statusCode" placeholder="请选择状态" @change="selectStatus">
-        <el-option v-for="item in status" :key="item.id" :label="item.name" :value="item.id"></el-option>
-      </el-select>
+      <div>
+        <el-select v-model="moduleId" placeholder="请选择模块" @change="selectModule">
+          <el-option v-for="item in modules" :key="item.id" :label="item.name" :value="item.id"></el-option>
+        </el-select>
+        <el-select v-model="statusCode" placeholder="请选择状态" @change="selectStatus">
+          <el-option v-for="item in status" :key="item.id" :label="item.name" :value="item.id"></el-option>
+        </el-select>
+      </div>
+      <div>
+        <el-button type="success" @click="creatDoc">新增</el-button>
+      </div>
     </div>
-    <el-table :data="tableData" stripe style="width: 100%" v-loading="loading">
-      <el-table-column prop="content" label="文章内容" :formatter="docContent" align="center"></el-table-column>
-      <el-table-column prop="moduleName" label="模块" align="center">
-        <template slot-scope="scope">
-          <el-tag close-transition>{{scope.row.moduleName}}</el-tag>
-        </template>
-      </el-table-column>
-      <el-table-column prop label="标注状态" :formatter="statusFmt" align="center">
-        <template slot-scope="scope">
-          <el-tooltip class="item" effect="dark" content="未标注" placement="top-start" align="center">
-            <i v-if="scope.row.status === '0'" class="iconfont">&#xe600;</i>
-          </el-tooltip>
-          <el-tooltip class="item" effect="dark" content="已标注" placement="top-start" align="center">
-            <i v-if="scope.row.status === '1'" class="iconfont">&#xe68c;</i>
-          </el-tooltip>
-        </template>
-      </el-table-column>
-      <el-table-column label="操作">
-        <template slot-scope="scope">
-          <el-tooltip class="item" effect="dark" content="去标注" placement="top-start" align="center">
-            <i @click="annotate(scope.row.id)" class="iconfont">&#xe603;</i>
-          </el-tooltip>
-        </template>
-      </el-table-column>
-    </el-table>
-    <div class="pagenation">
-      <el-pagination
-        @size-change="handleSizeChange"
-        @current-change="handleCurrentChange"
-        :current-page="page"
-        :page-sizes="[10, 20, 30, 40]"
-        :page-size="size"
-        layout="total, sizes, prev, pager, next, jumper"
-        :total="total"
-      ></el-pagination>
-    </div>
+    <el-row type="flex">
+      <el-col :span="12">
+        <el-table
+          :data="tableData"
+          border
+          stripe
+          style="width: 100%"
+          v-loading="loading"
+          @row-click="clickRow"
+        >
+          <el-table-column prop="content" label="文章内容" :formatter="docContent" align="center"></el-table-column>
+          <el-table-column prop="moduleName" label="模块" align="center">
+            <template slot-scope="scope">
+              <el-tag close-transition>{{scope.row.moduleName}}</el-tag>
+            </template>
+          </el-table-column>
+          <el-table-column prop label="标注状态" :formatter="statusFmt" align="center">
+            <template slot-scope="scope">
+              <el-tooltip
+                class="item"
+                effect="dark"
+                content="未标注"
+                placement="top-start"
+                align="center"
+              >
+                <i v-if="scope.row.status === '0'" class="iconfont">&#xe600;</i>
+              </el-tooltip>
+              <el-tooltip
+                class="item"
+                effect="dark"
+                content="已标注"
+                placement="top-start"
+                align="center"
+              >
+                <i v-if="scope.row.status === '1'" class="iconfont">&#xe68c;</i>
+              </el-tooltip>
+            </template>
+          </el-table-column>
+          <el-table-column label="操作" class="icons" align="center">
+            <template slot-scope="scope">
+              <el-tooltip
+                class="item"
+                effect="dark"
+                content="删除"
+                placement="top-start"
+                align="center"
+              >
+                <span>
+                  <i @click.stop="deleteDoc(scope.row.id)" class="iconfont">&#xe602;</i>
+                </span>
+              </el-tooltip>
+            </template>
+          </el-table-column>
+        </el-table>
+        <div class="pagenation">
+          <el-pagination
+            @size-change="handleSizeChange"
+            @current-change="handleCurrentChange"
+            :current-page="page"
+            :page-sizes="[10, 20, 30, 40]"
+            :page-size="size"
+            layout="total, sizes, prev, pager, next, jumper"
+            :total="total"
+          ></el-pagination>
+        </div>
+        <el-dialog title="新增文档" :visible.sync="dialogVisible" width="30%" @close="handleClose">
+          <el-form ref="form" label-width="100px">
+            <el-form-item label="文档内容：">
+              <el-input type="textarea" :rows="2" placeholder="请输入内容" v-model="textarea"></el-input>
+            </el-form-item>
+            <el-form-item label="所属模块：">
+              <el-select v-model="newModuleId" placeholder="请选择模块">
+                <el-option
+                  v-for="item in modules"
+                  :key="item.id"
+                  :label="item.name"
+                  :value="item.id"
+                ></el-option>
+              </el-select>
+            </el-form-item>
+          </el-form>
+
+          <span slot="footer" class="dialog-footer">
+            <el-button @click="dialogVisible = false">取 消</el-button>
+            <el-button type="primary" @click="saveDoc">保 存</el-button>
+          </span>
+        </el-dialog>
+      </el-col>
+      <el-col :span="12" class="edit-area">
+        <div v-if="isEdit" class="edit-form">
+          <annotate ref="annotator" :editDoc="editDoc"></annotate>
+        </div>
+        <div v-if="!isEdit" class="tips">
+          <span>请点击一行进行编辑</span>
+        </div>
+      </el-col>
+    </el-row>
   </div>
 </template>
 
@@ -53,11 +119,14 @@ import DocModel from "@/api/model/DocModel";
 import AnnotationAPIImpl from "@/api/impl/AnnotationAPIImpl";
 import ModuleModel from "@/api/model/ModuleModel";
 import EntityAPIImpl from "@/api/impl/EntityAPIImpl";
+import Annotate from "./Annotate.vue";
 @Component({
-  components: {}
+  components: { Annotate }
 })
 export default class DocList extends Vue {
   private tableData: DocModel[] = [];
+  $confirm: any;
+  $message: any;
   private docContent(val: any) {
     return val.content;
   }
@@ -80,12 +149,17 @@ export default class DocList extends Vue {
       name: "已标注"
     }
   ];
-  private moduleId: string = ""; // 模块Id
-  private statusCode: string = ""; // 状态码
+  private moduleId: string = "5d2fe2f28eb1330dcc8f46bd"; // 模块Id
+  private statusCode: string = "0"; // 状态码
   private page: number = 1; // 当前页
   private size: number = 10; // 每页多少条
   private total: number = 100; // 总条数
   private loading = true; // 表格loading
+  private isEdit = false; // 是否在编辑状态
+  private editDoc = new DocModel(); // 编辑中文档对象
+  private dialogVisible: boolean = false; // 对话框
+  private textarea: string = ""; // 新增文档内容
+  private newModuleId: string = ""; // 新增文档模块id
   private annotationAPI = new AnnotationAPIImpl();
   private entityAPI = new EntityAPIImpl();
 
@@ -107,17 +181,20 @@ export default class DocList extends Vue {
     this.annotationAPI
       .getDocByParam(this.moduleId, this.statusCode, this.page - 1, this.size)
       .then(({ data }) => {
-        this.total = data.numberOfElements;
+        this.total = data.totalElements;
         this.tableData = data.content;
         this.loading = false;
+        this.editDoc = data.content[0];
       });
   }
 
   private handleSizeChange(val: any) {
     this.size = val;
+    this.getDocByParam();
   }
 
   private handleCurrentChange(val: any) {
+    this.page = val;
     this.getDocByParam();
   }
 
@@ -129,9 +206,61 @@ export default class DocList extends Vue {
     this.getDocByParam();
   }
 
-  private annotate(id: any) {
-    // 前往标注页面
-    this.$router.push({ name: "annotate", params: { docId: id } });
+  private clickRow(row: any) {
+    this.editDoc = row;
+    this.isEdit = true;
+  }
+
+  private creatDoc() {
+    // 新增文档
+    this.dialogVisible = true;
+  }
+
+  private handleClose() {
+    // 关闭新增对话框
+    this.textarea = "";
+    this.newModuleId = "";
+  }
+
+  private saveDoc() {
+    // 新增文档
+    const doc: DocModel = {
+      content: this.textarea,
+      moduleId: this.newModuleId,
+      status: "0"
+    };
+    this.annotationAPI.creatDoc(doc).then(data => {
+      this.dialogVisible = false;
+      this.$message({
+        type: "success",
+        message: "新增成功!"
+      });
+      this.getDocByParam();
+    });
+  }
+
+  private deleteDoc(id: string) {
+    // 删除文档
+    this.$confirm("此操作将永久删除该条数据, 是否继续?", "提示", {
+      confirmButtonText: "确定",
+      cancelButtonText: "取消",
+      type: "warning"
+    })
+      .then(() => {
+        this.annotationAPI.deleteDoc(id).then(data => {
+          this.getDocByParam();
+          this.$message({
+            type: "success",
+            message: "删除成功!"
+          });
+        });
+      })
+      .catch(() => {
+        this.$message({
+          type: "info",
+          message: "已取消删除"
+        });
+      });
   }
 }
 </script>
@@ -141,5 +270,26 @@ export default class DocList extends Vue {
 .pagenation {
   text-align: center;
   padding-top: 30px;
+}
+.doc-list {
+  display: flex;
+  .doc-list-left {
+    flex-grow: 1;
+  }
+  .doc-list-right {
+    width: 100%;
+  }
+}
+.edit-area {
+  padding: 20px;
+  background-color: aliceblue;
+  .tips {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100%;
+    color: gray;
+    font-size: 28px;
+  }
 }
 </style>

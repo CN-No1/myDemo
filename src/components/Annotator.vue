@@ -1,34 +1,41 @@
 <template>
-  <div @click="getSelection">
+  <div @click="getSelection" style="padding-left: 20px;">
     <span
       v-for="(i,index) in docLableList"
       :key="index"
       :style="i.entityId!=-1?markStyle:''"
       @click="showDetail(i)"
-    >{{ doc.slice(i.startOffset, i.endOffset) }}</span>
+    >{{ docContent.slice(i.startOffset, i.endOffset) }}</span>
   </div>
 </template>
 
 <script lang="ts">
-import { Vue, Component, Prop } from "vue-property-decorator";
+import { Vue, Component, Prop, Watch } from "vue-property-decorator";
 @Component({
-  components: {},
+  components: {}
 })
 export default class Annotator extends Vue {
   @Prop()
-  private doc: string = "";
+  private doc!: string;
+
+  @Watch("doc", { immediate: true, deep: true })
+  private docChange(newVal: any, oldVal: any) {
+    this.docContent = newVal;
+  }
+
+  private docContent: string = "";
 
   @Prop()
   private entityPosition!: any[];
 
-  private startOffset!:number;  // 头偏移值
-  private endOffset!:number;  // 尾偏移值
+  private startOffset!: number; // 头偏移值
+  private endOffset!: number; // 尾偏移值
 
   get sortPositionList() {
     // 对标注位置进行升序排序,并且去重
     const sorted: any = {};
     let sort = this.entityPosition.sort(
-      (a, b) => a.startOffset - b.startOffset,
+      (a, b) => a.startOffset - b.startOffset
     );
     sort = sort.reduce((item, next) => {
       if (!sorted[next.startOffset]) {
@@ -50,13 +57,14 @@ export default class Annotator extends Vue {
       sortDoc.push(marked);
       flag = marked.endOffset;
     }
-    const end = this.creatPosition(flag, this.doc.length); // 补全
+    const end = this.creatPosition(flag, this.docContent.length); // 补全
     sortDoc.push(end);
     return sortDoc;
     // console.log(sortDoc);
   }
 
-  get markStyle() {  // 标志样式
+  get markStyle() {
+    // 标志样式
     return "color:red;cursor:pointer;";
   }
 
@@ -67,7 +75,7 @@ export default class Annotator extends Vue {
       endOffset: end,
       value: "",
       entity: "",
-      entityId: -1,
+      entityId: -1
     };
     return position;
   }
@@ -85,6 +93,7 @@ export default class Annotator extends Vue {
       preSelectionRange.setEnd(range.startContainer, range.startOffset); // 将原本range对象的开始点作为文档开头到开始点的结束位置，从而找出开始点的真正偏移值
       start = preSelectionRange.toString().length;
       end = start + range.toString().length;
+      if (start === end) return;
       if (this.validRange(start, end)) {
         this.$emit("getRangeData", range.toString());
         this.startOffset = start;
@@ -94,46 +103,48 @@ export default class Annotator extends Vue {
         vm.$message({
           type: "error",
           message: "选择区域不合法！",
-          duration: 1000,
+          duration: 1000
         });
       }
     }
   }
 
-  private validRange(startOffset: number, endOffset: number) {  // 判断选择区域是否合法
-    if (startOffset === endOffset) {
-      return true;
-    }
-    if (startOffset > this.doc.length || endOffset > this.doc.length) {
+  private validRange(startOffset: number, endOffset: number) {
+    // 判断选择区域是否合法
+    if (startOffset > this.doc.length || endOffset > this.docContent.length) {
       return false;
     }
     if (startOffset < 0 || endOffset < 0) {
       return false;
     }
-    for (const i of this.entityPosition) {  // 判断选中区域是否被包含在已标记词汇中
-      if ((i.startOffset <= startOffset) && (startOffset <= i.endOffset)) {
+    for (const i of this.entityPosition) {
+      // 判断选中区域是否被包含在已标记词汇中
+      if (i.startOffset < startOffset && startOffset < i.endOffset) {
         return false;
       }
-      if ((i.startOffset <= endOffset) && (endOffset <= i.endOffset)) {
+      if (i.startOffset > startOffset && i.startOffset < endOffset) {
         return false;
       }
     }
     return true;
   }
 
-  private addLabel(){  // 新增标注点
+  private addLabel() {
+    // 新增标注点
     const offset = {
       startOffset: this.startOffset,
-      endOffset: this.endOffset,
+      endOffset: this.endOffset
     };
-    this.$emit("addLabel",offset);
+    this.$emit("addLabel", offset);
   }
 
-  private showDetail(i: any) {  // 查看标注文本详情
-  console.log(i)
+  private showDetail(i: any) {
+    // 查看标注文本详情
     if (i.entityId === -1) {
       return false;
     }
+    this.startOffset = i.startOffset;
+    this.endOffset = i.endOffset;
     this.$emit("showDetail", i.value);
   }
 }

@@ -54,24 +54,24 @@ export default new Router({
       component: InnerLayout,
       redirect: "/annotation/uploadFile",
       children: [
-        {
-          path: "uploadFile",
-          name: "uploadFile",
-          meta: { menuName: "上传文章", iconClass: "" },
-          component: () => import("./views/annotation/UploadFile.vue"),
-        },
+        // {
+        //   path: "uploadFile",
+        //   name: "uploadFile",
+        //   meta: { menuName: "上传文章", iconClass: "" },
+        //   component: () => import("./views/annotation/UploadFile.vue"),
+        // },
         {
           path: "docList",
           name: "docList",
-          meta: { menuName: "文章列表", iconClass: "" },
+          meta: { menuName: "NLU", iconClass: "" },
           component: () => import("./views/annotation/annotate/DocList.vue"),
         },
-        {
-          path: "annotate",
-          name: "annotate",
-          meta: { menuName: "标注文章", iconClass: "", style: "display:none" },
-          component: () => import("./views/annotation/annotate/Annotate.vue"),
-        },
+        // {
+        //   path: "annotate",
+        //   name: "annotate",
+        //   meta: { menuName: "标注文章", iconClass: "", style: "display:none" },
+        //   component: () => import("./views/annotation/annotate/Annotate.vue"),
+        // },
       ],
     },
   ],

@@ -1,11 +1,18 @@
 <template>
-  <div class="header">
+  <div class="header" @click="closePop">
     <div>
-      <el-button type="primary" @click="addTopNode">新增</el-button>
+      <el-popover ref="popover" placement="bottom" width="160" trigger="manual" v-model="visible">
+        <el-input ref="newNode" v-model="newNode"></el-input>
+        <div style="text-align: right; margin: 0;padding-top:5px;">
+          <el-button size="mini" type="danger" @click="addTopNode(false)">取消</el-button>
+          <el-button type="primary" size="mini" @click="addTopNode(true)">确定</el-button>
+        </div>
+        <el-button slot="reference" @click.stop="showPop" type="primary">新增顶层节点</el-button>
+      </el-popover>
       <el-button type="success" @click="save">保存</el-button>
     </div>
     <el-row>
-      <el-col :span="8">
+      <el-col :span="8" v-loading="loading">
         <el-tree
           :data="dataTypeTree"
           node-key="id"
@@ -46,7 +53,7 @@
 <script lang="ts">
 import { Component, Vue } from "vue-property-decorator";
 import DataTypeModel from "@/api/model/DataTypeModel";
-import EntityAPIImpl from '@/api/impl/EntityAPIImpl';
+import EntityAPIImpl from "@/api/impl/EntityAPIImpl";
 
 @Component({
   components: {}
@@ -55,7 +62,13 @@ export default class DataType extends Vue {
   private formVisable: boolean = false;
   private dataTypeTree: DataTypeModel[] = [];
   private node: DataTypeModel = { label: "" };
+  private doneEdit: boolean = false; // 页面是否有修改
   private entityAPI = new EntityAPIImpl();
+  private loading: boolean = true;
+  private visible: boolean = false;
+  private newNode: string = "";
+  $confirm: any;
+  $message: any;
 
   private mounted() {
     // 初始化
@@ -64,9 +77,10 @@ export default class DataType extends Vue {
 
   private getDataType() {
     // 获取数据类型树
-    this.entityAPI.getDataType().then(({data}) => {
-      this.dataTypeTree = data;
-    })
+    this.entityAPI.getDataType().then(({ data }) => {
+      if (data) this.dataTypeTree = data;
+      this.loading = false;
+    });
   }
 
   private handleClick(data: any) {
@@ -104,20 +118,71 @@ export default class DataType extends Vue {
     return uuid;
   }
 
-  private addTopNode() {
+  private showPop() {
+    this.visible = true;
+    const input = this.$refs.newNode as any;
+    input.focus();
+  }
+
+  private closePop() {
+    this.visible = false;
+    this.newNode = "";
+  }
+
+  private addTopNode(val: boolean) {
     // 新增顶层节点
-    const node = { id: this.getUUID(), label: "空节点" };
-    this.dataTypeTree.unshift(node);
+    if (val) {
+      const node = { id: this.getUUID(), label: this.newNode };
+      this.dataTypeTree.unshift(node);
+      this.doneEdit = true;
+    }
+    this.visible = false;
+    this.newNode = "";
   }
 
   private editNode(val: any) {
     // 编辑节点
     this.node.label = val;
+    this.doneEdit = true;
   }
 
   private save() {
     // 保存数据类型树
-    this.entityAPI.creatOrUpdateDataType(this.dataTypeTree);
+    this.loading = true;
+    this.entityAPI.creatOrUpdateDataType(this.dataTypeTree).then(data => {
+      this.loading = false;
+      this.doneEdit = false;
+      this.$message({
+        type: "success",
+        message: "保存成功!"
+      });
+    });
+  }
+
+  private beforeRouteLeave(to: any, from: any, next: () => void) {
+    // 离开页面前保存
+    if (this.doneEdit) {
+      this.$confirm(
+        "检测到未保存的内容，是否在离开页面前保存修改？",
+        "确认信息",
+        {
+          distinguishCancelAndClose: true,
+          confirmButtonText: "保存",
+          cancelButtonText: "放弃修改"
+        }
+      )
+        .then(() => {
+          this.save();
+          next();
+        })
+        .catch((action: any) => {
+          if (action === "cancel") {
+            next();
+          }
+        });
+    } else {
+      next();
+    }
   }
 }
 </script>

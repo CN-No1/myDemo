@@ -1,5 +1,5 @@
 <template>
-  <section>
+  <section style="height:100%;">
     <el-menu
       :default-active="defaultActive"
       class="el-menu-vertical-demo"
@@ -7,6 +7,7 @@
       background-color="#545c64"
       text-color="#fff"
       active-text-color="#ffd04b"
+      style="height:100%;"
     >
       <side-bar-item v-for="(item, index) in sideMenu" :key="index" :item="item"></side-bar-item>
     </el-menu>

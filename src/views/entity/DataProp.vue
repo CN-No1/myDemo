@@ -1,14 +1,21 @@
 <template>
-  <div class="header">
+  <div class="header" @click="closePop">
     <div>
-      <el-select v-model="module" placeholder="请选择模块" @change="selectmodule">
+      <el-select v-model="moduleId" placeholder="请选择模块" @change="selectmodule">
         <el-option v-for="item in modules" :key="item.id" :label="item.name" :value="item.id"></el-option>
       </el-select>
-      <el-button v-if="module!=''" type="primary" @click="addTopNode">新增顶层节点</el-button>
-      <el-button v-if="module!=''" type="success" @click="save">保存</el-button>
+      <el-popover ref="popover" placement="bottom" width="160" trigger="manual" v-model="visible">
+        <el-input ref="newNode" v-model="newNode"></el-input>
+        <div style="text-align: right; margin: 0;padding-top:5px;">
+          <el-button size="mini" type="danger" @click="addTopNode(false)">取消</el-button>
+          <el-button type="primary" size="mini" @click="addTopNode(true)">确定</el-button>
+        </div>
+        <el-button slot="reference" @click.stop="showPop" type="primary">新增顶层节点</el-button>
+      </el-popover>
+      <el-button v-if="moduleId!=''" type="success" @click="save">保存</el-button>
     </div>
     <el-row>
-      <el-col :span="8">
+      <el-col :span="8" v-loading="loading">
         <el-tree
           :data="dataProp.dataPropList"
           node-key="id"
@@ -77,25 +84,34 @@
 <script lang="ts">
 import { Vue, Component } from "vue-property-decorator";
 import Treeselect from "@riophae/vue-treeselect";
-import DataPropModel,{ DataPropNode } from '@/api/model/DataPropModel';
-import { getUUID } from '@/util/uuid';
-import EntityAPIImpl from '@/api/impl/EntityAPIImpl';
+import DataPropModel, { DataPropNode } from "@/api/model/DataPropModel";
+import { getUUID } from "@/util/uuid";
+import EntityAPIImpl from "@/api/impl/EntityAPIImpl";
 
 @Component({ components: { Treeselect } })
 export default class DataProp extends Vue {
   private formVisable: boolean = false;
   private dataProp: DataPropModel = new DataPropModel(); // 数据属性对象
   private dataTypeList: any[] = []; // 数据类型列表
-  private node: DataPropNode = {label:"",entityClass:[],dataType:""}; // 被选中的节点
-  private module: string = ""; // 选中moduleId
+  private node: DataPropNode = { label: "", entityClass: [], dataType: "" }; // 被选中的节点
+  private moduleId: string = "5d2fe2f28eb1330dcc8f46bd"; // 选中moduleId
   private modules: any[] = []; // module下拉数据
   private entityList: any[] = []; // 实体类树
   private sortValueBy: string = "LEVEL"; // 选项排序方式（"ORDER_SELECTED"，"LEVEL"，"INDEX"）
   private entityAPI = new EntityAPIImpl();
+  private doneEdit: boolean = false; // 页面是否有修改
+  private loading: boolean = true;
+  private visible: boolean = false;
+  private newNode: string = "";
+  $confirm: any;
+  $message: any;
 
   private mounted() {
     // 初始化
     this.getModule();
+    this.getDataProp();
+    this.getEntityList();
+    this.getDataTypeList();
   }
 
   private getModule() {
@@ -112,17 +128,17 @@ export default class DataProp extends Vue {
     this.getEntityList();
     this.getDataTypeList();
   }
-  
+
   private getDataProp() {
     // 获取对象属性
-    this.entityAPI.getDataProp(this.module).then(({ data }) => {
+    this.entityAPI.getDataProp(this.moduleId).then(({ data }) => {
       if (data) this.dataProp = data;
     });
   }
 
   private getEntityList() {
     // 获取实体类树
-    this.entityAPI.getClass(this.module).then(({ data }) => {
+    this.entityAPI.getClass(this.moduleId).then(({ data }) => {
       if (data) this.entityList = data.entityList;
     });
   }
@@ -131,6 +147,7 @@ export default class DataProp extends Vue {
     // 获取数据类型list
     this.entityAPI.getDataType().then(({ data }) => {
       if (data) this.dataTypeList = data;
+      this.loading = false;
     });
   }
 
@@ -159,38 +176,106 @@ export default class DataProp extends Vue {
     if (!data.children) {
       this.$set(data, "children", []);
     }
-    data.children.push(newChild);
+    data.children.unshift(newChild);
+    this.doneEdit = true;
   }
 
   private remove(node: any, data: any) {
     // 删除当前节点
-    const parent = node.parent;
-    const children = parent.data.children || parent.data;
-    const index = children.findIndex((d: any) => d.id === data.id);
-    children.splice(index, 1);
-    this.formVisable = false;
+    this.$confirm("确认删除吗?", "提示", {
+      confirmButtonText: "确定",
+      cancelButtonText: "取消",
+      type: "warning"
+    })
+      .then(() => {
+        const parent = node.parent;
+        const children = parent.data.children || parent.data;
+        const index = children.findIndex((d: any) => d.id === data.id);
+        children.splice(index, 1);
+        this.formVisable = false;
+        this.$message({
+          type: "success",
+          message: "删除成功!"
+        });
+        this.doneEdit = true;
+      })
+      .catch(() => {
+        this.$message({
+          type: "info",
+          message: "已取消删除"
+        });
+      });
   }
 
-  private addTopNode() {
+  private showPop() {
+    this.visible = true;
+    const input = this.$refs.newNode as any;
+    input.focus();
+  }
+
+  private closePop() {
+    this.visible = false;
+    this.newNode = "";
+  }
+  private addTopNode(val: boolean) {
     // 新增顶层节点
-    const node: DataPropNode = {
-      id: getUUID(),
-      label: "空节点",
-      children: [],
-      entityClass: [],
-      dataType: ""
-    };
-    this.dataProp.dataPropList.unshift(node);
+    if (val) {
+      const node: DataPropNode = {
+        id: getUUID(),
+        label: this.newNode,
+        children: [],
+        entityClass: [],
+        dataType: ""
+      };
+      this.dataProp.dataPropList.unshift(node);
+      this.doneEdit = true;
+    }
+    this.visible = false;
+    this.newNode = "";
   }
 
   private editNode(val: any) {
     // 编辑节点名字
     this.node.label = val;
+    this.doneEdit = true;
   }
 
   private save() {
     // 保存数据属性树
-    this.entityAPI.creatOrUpdateDataProp(this.dataProp);
+    this.loading = true;
+    this.entityAPI.creatOrUpdateDataProp(this.dataProp).then(data => {
+      this.loading = false;
+      this.doneEdit = false;
+      this.$message({
+        type: "success",
+        message: "保存成功!"
+      });
+    });
+  }
+  private beforeRouteLeave(to: any, from: any, next: () => void) {
+    // 离开页面前保存
+    if (this.doneEdit) {
+      this.$confirm(
+        "检测到未保存的内容，是否在离开页面前保存修改？",
+        "确认信息",
+        {
+          distinguishCancelAndClose: true,
+          confirmButtonText: "保存",
+          cancelButtonText: "放弃修改"
+        }
+      )
+        .then(() => {
+          this.save();
+          next();
+        })
+        .catch((action: any) => {
+          if (action === "cancel") {
+            next();
+          }
+        });
+    } else {
+      next();
+    }
   }
 }
 </script>
