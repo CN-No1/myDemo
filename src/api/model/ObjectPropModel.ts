@@ -1,4 +1,3 @@
-import { EntityClassNode } from "./EntityClassModel";
 class ObjectPropModel {
     // 数据属性对象
     public id?: string;
@@ -20,8 +19,8 @@ export interface ObjectPropNode {
 }
 
 export interface Relation　{
-    domain?: EntityClassNode[];
-    range?: EntityClassNode[];
+    domain?: string;
+    range?: string;
 }
 
 export default ObjectPropModel;

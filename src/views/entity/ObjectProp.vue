@@ -61,22 +61,22 @@
         <div class="treeselect" v-for="(item,index) in node.relation" :key="index">
           <treeselect
             v-model="item.domain"
-            valueFormat="object"
-            :multiple="true"
+            :multiple="false"
+            :open-on-focus="true"
+            :clear-on-select="true"
+            :close-on-select="true"
             :options="entityList"
             :searchable="true"
-            :sort-value-by="sortValueBy"
-            :flat="true"
             placeholder="请选择Domain"
           />
           <treeselect
             v-model="item.range"
-            valueFormat="object"
-            :multiple="true"
+            :multiple="false"
+            :open-on-focus="true"
+            :clear-on-select="true"
+            :close-on-select="true"
             :options="entityList"
             :searchable="true"
-            :sort-value-by="sortValueBy"
-            :flat="true"
             placeholder="请选择Range"
           />
           <el-button
@@ -245,7 +245,7 @@ export default class ObjectProp extends Vue {
 
   private addOneRelationship() {
     // 新增一条关系
-    const rel: Relation = { domain: [], range: [] };
+    const rel: Relation = { domain: "", range: "" };
     this.node.relation.push(rel);
   }
 

@@ -1,18 +1,15 @@
-class EntityClassModel {
+class EntityClassNode {
     public id?: string;
-    public moduleId?: string;
-    public entityList!: EntityClassNode[];
-    constructor() {
-        this.id = "";
-        this.moduleId = "";
-        this.entityList = [];
-    }
+    public label?: string;
+    public description?: string;
+    public children?: EntityClassNode[];
 }
 
-export interface EntityClassNode {
+export interface FlatEntityClassModel {
     id?: string;
     label?: string;
-    children?: EntityClassNode[];
+    moduleId?: string;
+    pid?: string;
 }
 
-export default EntityClassModel;
+export default EntityClassNode;

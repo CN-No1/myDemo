@@ -14,7 +14,7 @@ interface EntityAPI {
 
     getDataType(moduleId: string): Promise<any>;
 
-    creatOrUpdateClass(entityClass: EntityClassModel): Promise<any>;
+    creatOrUpdateClass(entityClass: EntityClassModel[]): Promise<any>;
 
     creatOrUpdateDataProp(dataPropModel: DataPropModel): Promise<any>;
 

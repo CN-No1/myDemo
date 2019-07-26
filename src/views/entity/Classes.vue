@@ -17,7 +17,7 @@
     <el-row>
       <el-col :span="8" v-loading="loading">
         <el-tree
-          :data="entityClass.entityList"
+          :data="entityClass"
           node-key="id"
           default-expand-all
           :expand-on-click-node="false"
@@ -50,7 +50,15 @@
           <el-input
             ref="nodeName"
             v-model="node.label"
-            @input="editNode"
+            @input="editNodeName"
+            @focus="inputFocus($event)"
+          ></el-input>
+        </div>        
+        <div class="node-name">
+          <span>描述:</span>
+          <el-input
+            v-model="node.description"
+            @input="editNodeDesc"
             @focus="inputFocus($event)"
           ></el-input>
         </div>
@@ -62,16 +70,15 @@
 <script lang="ts">
 import { Vue, Component } from "vue-property-decorator";
 import EntityAPIImpl from "@/api/impl/EntityAPIImpl";
-import EntityClassModel, {
-  EntityClassNode
-} from "@/api/model/EntityClassModel";
 import { getUUID } from "@/util/uuid";
+import EntityClassNode from "../../api/model/EntityClassModel";
+import { NestedToFlat, FlatToNested } from "../../util/tranformTreeData";
 
 @Component({})
 export default class Entity extends Vue {
   private formVisable: boolean = false;
-  private entityClass: EntityClassModel = new EntityClassModel();
-  private node: EntityClassNode = { label: "" }; // 节点临时对象，用于动态修改树节点展示
+  private entityClass: EntityClassNode[] = [];
+  private node: EntityClassNode = { label: "",description:"" }; // 节点临时对象，用于动态修改树节点展示
   private moduleId: string = "5d2fe2f28eb1330dcc8f46bd"; // 选中moduleId
   private modules: any[] = []; // module下拉数据
   private doneEdit: boolean = false; // 页面是否有修改
@@ -89,7 +96,6 @@ export default class Entity extends Vue {
   }
 
   private selectmodule(val: string) {
-    this.entityClass.moduleId = val;
     // 选择module查找class
     this.getClass();
   }
@@ -104,7 +110,7 @@ export default class Entity extends Vue {
   private getClass() {
     // 获取实体类
     this.entityAPI.getClass(this.moduleId).then(({ data }) => {
-      if (data) this.entityClass = data;
+      if (data) this.entityClass = FlatToNested(data);
       this.loading = false;
     });
   }
@@ -122,11 +128,24 @@ export default class Entity extends Vue {
     e.currentTarget.select();
   }
 
+  private editNodeName(val: any) {
+    // 动态修改树节点显示
+    this.node.label = val;
+    this.doneEdit = true;
+  }
+
+  private editNodeDesc(val: any) {
+    // 动态修改树节点描述
+    this.node.description = val;
+    this.doneEdit = true;
+  }
+
   private append(node: any, data: any) {
     // 新增子节点
     const newChild: EntityClassNode = {
       id: getUUID(),
       label: "空节点",
+      description: "",
       children: []
     };
     if (!data.children) {
@@ -180,25 +199,21 @@ export default class Entity extends Vue {
       const node: EntityClassNode = {
         id: getUUID(),
         label: this.newNode,
+        description: "",
         children: []
       };
-      this.entityClass.entityList.unshift(node);
+      this.entityClass.unshift(node);
       this.doneEdit = true;
     }
     this.visible = false;
     this.newNode = "";
   }
 
-  private editNode(val: any) {
-    // 动态修改树节点显示
-    this.node.label = val;
-    this.doneEdit = true;
-  }
-
   private save() {
     // 保存实体树
     this.loading = true;
-    this.entityAPI.creatOrUpdateClass(this.entityClass).then(data => {
+    const flatData = NestedToFlat(this.entityClass, this.moduleId);
+    this.entityAPI.creatOrUpdateClass(flatData).then(data => {
       this.loading = false;
       this.doneEdit = false;
       this.$message({

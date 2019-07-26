@@ -32,7 +32,7 @@ class EntityAPIImpl extends BaseAPI implements EntityAPI {
         return await this.instance.get("getDataType");
     }
 
-    public async creatOrUpdateClass(entityClass: EntityClassModel): Promise<any> {
+    public async creatOrUpdateClass(entityClass: EntityClassModel[]): Promise<any> {
         return await this.instance.post("creatOrUpdateClass", JSON.stringify(entityClass));
     }
 
