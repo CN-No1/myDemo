@@ -1,7 +1,6 @@
 import BaseAPI from "../api";
 import AnnotationAPI from "../AnnotationAPI";
-import Annotation from "../model/AnnotationModel";
-import DocModel from "@/api/model/DocModel";
+import NLUEntity from "@/api/model/NLUEntity";
 
 class AnnotationAPIImpl extends BaseAPI implements AnnotationAPI {
 
@@ -14,8 +13,8 @@ class AnnotationAPIImpl extends BaseAPI implements AnnotationAPI {
         return await this.instance.get("getAnnotation?id=" + id);
     }
 
-    public async createOrUpdateAnnotation(annotation: Annotation) {
-        return await this.instance.post("createOrUpdateAnnotation", JSON.stringify(annotation));
+    public async createOrUpdateAnnotation(doc: NLUEntity) {
+        return await this.instance.post("createOrUpdateAnnotation", JSON.stringify(doc));
     }
 
     public async getDocById(id: string): Promise<any> {
@@ -27,11 +26,11 @@ class AnnotationAPIImpl extends BaseAPI implements AnnotationAPI {
             "getDocByParam?moduleId=" + moduleId + "&status=" + status + "&page=" + page + "&size=" + size);
     }
 
-    public async creatDoc(doc: DocModel): Promise<any> {
-        return await this.instance.post("createDoc", JSON.stringify(doc));
+    public async createNLUDoc(doc: NLUEntity): Promise<any> {
+        return await this.instance.post("createNLUDoc", JSON.stringify(doc));
     }
-    public async deleteDoc(id: string): Promise<any> {
-        return await this.instance.delete("deleteDoc?id=" + id);
+    public async deleteNLUDoc(id: string): Promise<any> {
+        return await this.instance.delete("deleteNLUDoc?id=" + id);
     }
 }
 

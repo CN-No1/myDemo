@@ -7,6 +7,7 @@ import DataTypeModel from "../model/DataTypeModel";
 
 class EntityAPIImpl extends BaseAPI implements EntityAPI {
 
+
     constructor() {
         super();
         this.instance.defaults.baseURL = "/api/entity";
@@ -34,6 +35,10 @@ class EntityAPIImpl extends BaseAPI implements EntityAPI {
 
     public async creatOrUpdateClass(entityClass: EntityClassModel[]): Promise<any> {
         return await this.instance.post("creatOrUpdateClass", JSON.stringify(entityClass));
+    }
+
+    public async deleteClass(id: string): Promise<any> {
+        return await this.instance.delete("deleteClass?id" + id);
     }
 
     public async creatOrUpdateDataProp(dataPropModel: DataPropModel): Promise<any> {

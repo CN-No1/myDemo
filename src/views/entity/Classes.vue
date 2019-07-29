@@ -71,8 +71,8 @@
 import { Vue, Component } from "vue-property-decorator";
 import EntityAPIImpl from "@/api/impl/EntityAPIImpl";
 import { getUUID } from "@/util/uuid";
-import EntityClassNode from "../../api/model/EntityClassModel";
-import { NestedToFlat, FlatToNested } from "../../util/tranformTreeData";
+import EntityClassNode from "@/api/model/EntityClassModel";
+import { NestedToFlat, FlatToNested } from "@/util/tranformTreeData";
 
 @Component({})
 export default class Entity extends Vue {
@@ -146,6 +146,7 @@ export default class Entity extends Vue {
       id: getUUID(),
       label: "空节点",
       description: "",
+      bandFlag: "0",
       children: []
     };
     if (!data.children) {
@@ -163,6 +164,7 @@ export default class Entity extends Vue {
       type: "warning"
     })
       .then(() => {
+        this.entityAPI
         const parent = node.parent;
         const children = parent.data.children || parent.data;
         const index = children.findIndex((d: any) => d.id === data.id);
@@ -200,6 +202,7 @@ export default class Entity extends Vue {
         id: getUUID(),
         label: this.newNode,
         description: "",
+        bandFlag: "0",
         children: []
       };
       this.entityClass.unshift(node);
@@ -216,10 +219,12 @@ export default class Entity extends Vue {
     this.entityAPI.creatOrUpdateClass(flatData).then(data => {
       this.loading = false;
       this.doneEdit = false;
+      this.formVisable = false;
       this.$message({
         type: "success",
         message: "保存成功!"
       });
+      this.getClass();
     });
   }
 

@@ -4,7 +4,7 @@
       <annotator
         ref="annotator"
         :doc="doc.content"
-        :entityPosition="entityPosition"
+        :entityPosition="doc.annotationList"
         @getRangeData="getRangeData"
         @addLabel="addLabel"
         @showDetail="showDetail"
@@ -29,7 +29,12 @@
       </div>
     </el-form-item>
     <el-form-item label="已标注：">
-      <el-table :data="entityPosition" style="width: 100%" :header-cell-style="rowStyle" :row-style="rowStyle">
+      <el-table
+        :data="doc.annotationList"
+        style="width: 100%"
+        :header-cell-style="rowStyle"
+        :row-style="rowStyle"
+      >
         <el-table-column prop="value" label="文本" width="180"></el-table-column>
         <el-table-column prop="entity" label="关联实体" width="180"></el-table-column>
         <el-table-column label="操作">
@@ -42,7 +47,7 @@
     <el-form-item>
       <el-button type="success" @click="saveAll()">保存</el-button>
       <!-- <el-button @click="prev()">上一个</el-button>
-      <el-button @click="next()">下一个</el-button> -->
+      <el-button @click="next()">下一个</el-button>-->
     </el-form-item>
   </el-form>
 </template>
@@ -53,28 +58,28 @@ import Annotator from "@/components/Annotator.vue";
 import Treeselect from "@riophae/vue-treeselect";
 import "@riophae/vue-treeselect/dist/vue-treeselect.css";
 import AnnotationModel, { Position } from "@/api/model/AnnotationModel";
-import DocModel from "@/api/model/DocModel";
 import AnnotationAPIImpl from "@/api/impl/AnnotationAPIImpl";
 import EntityAPIImpl from "@/api/impl/EntityAPIImpl";
+import NLUEntity from "@/api/model/NLUEntity";
+import { Annotation } from "@/api/model/NLUEntity";
+import { FlatToNested } from "@/util/tranformTreeData";
 
 @Component({
   components: { Annotator, Treeselect }
 })
 export default class Annotate extends Vue {
   @Prop()
-  private editDoc!: DocModel;
+  private editDoc!: NLUEntity;
 
   @Watch("editDoc", { immediate: true, deep: true })
   private docChange(newVal: any, oldVal: any) {
-    this.doc = newVal;
+    this.doc = Object.assign(this.doc, newVal);
     this.init();
     this.getEntityList();
-    this.getAnnotation();
   }
 
-  private doc: DocModel = { content: "" }; //  文档对象
+  private doc: NLUEntity = { content: "", annotationList: [] }; //  文档对象
   private annotation = new AnnotationModel();
-  private entityPosition: Position[] = []; // 标注位置
   private dialogVisible: boolean = false; // 对话框显示
   private text: string = ""; // 选中文本
   private entityList: any[] = []; // 实体类树
@@ -88,8 +93,8 @@ export default class Annotate extends Vue {
   $confirm: any;
   $message: any;
 
-  private rowStyle(){
-    return "background-color: aliceblue;"
+  private rowStyle() {
+    return "background-color: aliceblue;";
   }
 
   private init() {
@@ -98,20 +103,12 @@ export default class Annotate extends Vue {
     this.seletedWord = false;
     this.text = "";
     this.entityArr = [];
-    this.entityPosition = [];
   }
 
   private getEntityList() {
     // 获取实体类树
     this.entityAPI.getClass(this.doc.moduleId).then(({ data }) => {
-      if (data) this.entityList = data.entityList;
-    });
-  }
-
-  private getAnnotation() {
-    // 获取文本位置信息
-    this.annotationAPI.getAnnotation(this.doc.id).then(({ data }) => {
-      if (data) this.entityPosition = data.positionList;
+      if (data) this.entityList = FlatToNested(data);
       this.loading = false;
     });
   }
@@ -135,30 +132,24 @@ export default class Annotate extends Vue {
 
   private addLabel(offset: any) {
     // 添加标注点
-    this.entityPosition = [];
+    this.doc.annotationList = [];
     this.entityArr.map(item => {
-      const newLabel: Position = {
+      const newLabel: Annotation = {
         startOffset: offset.startOffset,
         endOffset: offset.endOffset,
         value: this.text,
         entityId: item.id,
         entity: item.label
       };
-      this.entityPosition.push(newLabel);
+      this.doc.annotationList.push(newLabel);
     });
-    // console.log(this.entityArr)
-  }
-
-  private deleteRel(index: any) {
-    // 删除实体关联
-    this.entityPosition.splice(index, 1);
   }
 
   private showDetail(value: string) {
     // 编辑标注点
     this.seletedWord = true;
     this.entityArr = [];
-    const innerTableData = this.entityPosition.filter(
+    const innerTableData = this.doc.annotationList.filter(
       item => item.value === value
     );
     this.text = value;
@@ -199,24 +190,20 @@ export default class Annotate extends Vue {
 
   private deleteRow(row: any) {
     // 删除一行
-    this.entityPosition.splice(row.$index,1)
-    this.entityArr = this.entityArr.filter(item=>item.id!=row.row.entityId)
+    this.doc.annotationList.splice(row.$index, 1);
+    this.entityArr = this.entityArr.filter(item => item.id != row.row.entityId);
   }
 
   private saveAll() {
     // 保存标注信息
-    this.annotation.positionList = this.entityPosition;
-    this.annotation.docId = this.doc.id;
-    this.annotationAPI
-      .createOrUpdateAnnotation(this.annotation)
-      .then((res: any) => {
-        if (res.code === 0) {
-          this.$message({
-            message: "保存成功！",
-            type: "success"
-          });
-        }
-      });
+    this.annotationAPI.createOrUpdateAnnotation(this.doc).then((res: any) => {
+      if (res.code === 0) {
+        this.$message({
+          message: "保存成功！",
+          type: "success"
+        });
+      }
+    });
   }
 
   private next() {

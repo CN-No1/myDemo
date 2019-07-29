@@ -87,6 +87,7 @@ import Treeselect from "@riophae/vue-treeselect";
 import DataPropModel, { DataPropNode } from "@/api/model/DataPropModel";
 import { getUUID } from "@/util/uuid";
 import EntityAPIImpl from "@/api/impl/EntityAPIImpl";
+import { FlatToNested } from '@/util/tranformTreeData';
 
 @Component({ components: { Treeselect } })
 export default class DataProp extends Vue {
@@ -112,6 +113,7 @@ export default class DataProp extends Vue {
     this.getDataProp();
     this.getEntityList();
     this.getDataTypeList();
+    this.dataProp.moduleId = this.moduleId;
   }
 
   private getModule() {
@@ -139,7 +141,7 @@ export default class DataProp extends Vue {
   private getEntityList() {
     // 获取实体类树
     this.entityAPI.getClass(this.moduleId).then(({ data }) => {
-      if (data) this.entityList = data.entityList;
+      if (data) this.entityList = FlatToNested(data);
     });
   }
 
@@ -246,10 +248,12 @@ export default class DataProp extends Vue {
     this.entityAPI.creatOrUpdateDataProp(this.dataProp).then(data => {
       this.loading = false;
       this.doneEdit = false;
+      this.formVisable = false;
       this.$message({
         type: "success",
         message: "保存成功!"
       });
+      this.getDataProp();
     });
   }
   private beforeRouteLeave(to: any, from: any, next: () => void) {

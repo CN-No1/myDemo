@@ -16,6 +16,8 @@ interface EntityAPI {
 
     creatOrUpdateClass(entityClass: EntityClassModel[]): Promise<any>;
 
+    deleteClass(id: string): Promise<any>;
+
     creatOrUpdateDataProp(dataPropModel: DataPropModel): Promise<any>;
 
     creatOrUpdateObjectProp(objectPropModel: ObjectPropModel): Promise<any>;

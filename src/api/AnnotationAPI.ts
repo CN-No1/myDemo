@@ -1,19 +1,18 @@
-import Annotation from "./model/AnnotationModel";
-import DocModel from "./model/DocModel";
+import NLUEntity from "@/api/model/NLUEntity";
 
 interface AnnotationAPI {
 
     getAnnotation(id: string): Promise<any>;
 
-    createOrUpdateAnnotation(annotation: Annotation): Promise<any>;
+    createOrUpdateAnnotation(doc: NLUEntity): Promise<any>;
 
     getDocById(id: string): Promise<any>;
 
     getDocByParam(moduleId: string, status: string, page: number, size: number): Promise<any>;
 
-    creatDoc(doc: DocModel): Promise<any>;
+    createNLUDoc(doc: NLUEntity): Promise<any>;
 
-    deleteDoc(id: string): Promise<any>;
+    deleteNLUDoc(id: string): Promise<any>;
 }
 
 export default AnnotationAPI;

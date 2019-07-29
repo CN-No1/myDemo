@@ -101,6 +101,7 @@ import ObjectPropModel, {
 } from "@/api/model/ObjectPropModel";
 import { getUUID } from "@/util/uuid";
 import EntityAPIImpl from "@/api/impl/EntityAPIImpl";
+import { FlatToNested } from "@/util/tranformTreeData";
 
 @Component({ components: { Treeselect } })
 export default class ObjectProp extends Vue {
@@ -124,6 +125,7 @@ export default class ObjectProp extends Vue {
     this.getModule();
     this.getObjectProp();
     this.getEntityList();
+    this.objectProp.moduleId = this.moduleId;
   }
 
   private getModule() {
@@ -143,7 +145,9 @@ export default class ObjectProp extends Vue {
   private getObjectProp() {
     // 获取数据属性
     this.entityAPI.getObjectProp(this.moduleId).then(({ data }) => {
-      if (data) this.objectProp = data;
+      if (data) {
+        this.objectProp = data;
+      }
       this.loading = false;
     });
   }
@@ -151,7 +155,9 @@ export default class ObjectProp extends Vue {
   private getEntityList() {
     // 获取实体类树
     this.entityAPI.getClass(this.moduleId).then(({ data }) => {
-      if (data) this.entityList = data.entityList;
+      if (data) {
+        this.entityList = FlatToNested(data);
+      }
     });
   }
 
@@ -260,10 +266,12 @@ export default class ObjectProp extends Vue {
     this.entityAPI.creatOrUpdateObjectProp(this.objectProp).then(data => {
       this.loading = false;
       this.doneEdit = false;
+      this.formVisable = false;
       this.$message({
         type: "success",
         message: "保存成功!"
       });
+      this.getObjectProp();
     });
   }
 

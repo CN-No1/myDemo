@@ -1,11 +1,12 @@
 export const NestedToFlat = (data: any, moduleId: string, pid?: string) => {
-    // 树状转平铺
+    // 嵌套转平铺
     let res: any[] = [];
     for (const item of data) {
         res.push({
             id: item.id,
             label: item.label,
             description: item.description,
+            bandFlag: item.bandFlag,
             moduleId,
             pid: pid || "0",
         });
@@ -14,13 +15,12 @@ export const NestedToFlat = (data: any, moduleId: string, pid?: string) => {
         }
     }
     return res;
-}
+};
 
 export const FlatToNested = (data: any, option?: any) => {
+    // 平铺转嵌套
     option = option || {};
     const idProperty = option.idProperty || "id";
-    const nameProperty = option.nameProperty || "label";
-    const descProperty = option.descProperty || "description";
     const parentProperty = option.parentProperty || "pid";
     const childrenProperty = option.childrenProperty || "children";
     const res = [];
@@ -34,14 +34,10 @@ export const FlatToNested = (data: any, option?: any) => {
             if (!tmpMap[item[parentProperty]][childrenProperty]) {
                 tmpMap[item[parentProperty]][childrenProperty] = [];
             }
-            item[nameProperty] = item[nameProperty];
-            item[descProperty] = item[descProperty];
             tmpMap[item[parentProperty]][childrenProperty].push(item);
         } else {
-            item[nameProperty] = item[nameProperty];
-            item[descProperty] = item[descProperty];
             res.push(item);
         }
     }
     return res;
-}
+};

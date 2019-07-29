@@ -115,16 +115,16 @@
 
 <script lang="ts">
 import { Vue, Component } from "vue-property-decorator";
-import DocModel from "@/api/model/DocModel";
 import AnnotationAPIImpl from "@/api/impl/AnnotationAPIImpl";
 import ModuleModel from "@/api/model/ModuleModel";
 import EntityAPIImpl from "@/api/impl/EntityAPIImpl";
 import Annotate from "./Annotate.vue";
+import NLUEntity from '@/api/model/NLUEntity';
 @Component({
   components: { Annotate }
 })
 export default class DocList extends Vue {
-  private tableData: DocModel[] = [];
+  private tableData: NLUEntity[] = [];
   $confirm: any;
   $message: any;
   private docContent(val: any) {
@@ -156,7 +156,7 @@ export default class DocList extends Vue {
   private total: number = 100; // 总条数
   private loading = true; // 表格loading
   private isEdit = false; // 是否在编辑状态
-  private editDoc = new DocModel(); // 编辑中文档对象
+  private editDoc = new NLUEntity(); // 编辑中文档对象
   private dialogVisible: boolean = false; // 对话框
   private textarea: string = ""; // 新增文档内容
   private newModuleId: string = ""; // 新增文档模块id
@@ -224,12 +224,13 @@ export default class DocList extends Vue {
 
   private saveDoc() {
     // 新增文档
-    const doc: DocModel = {
+    const doc: NLUEntity = {
       content: this.textarea,
       moduleId: this.newModuleId,
-      status: "0"
+      status: "0",
+      annotationList: []
     };
-    this.annotationAPI.creatDoc(doc).then(data => {
+    this.annotationAPI.createNLUDoc(doc).then(data => {
       this.dialogVisible = false;
       this.$message({
         type: "success",
@@ -247,7 +248,7 @@ export default class DocList extends Vue {
       type: "warning"
     })
       .then(() => {
-        this.annotationAPI.deleteDoc(id).then(data => {
+        this.annotationAPI.deleteNLUDoc(id).then(data => {
           this.getDocByParam();
           this.$message({
             type: "success",

@@ -2,6 +2,7 @@ class EntityClassNode {
     public id?: string;
     public label?: string;
     public description?: string;
+    public bandFlag?: string;
     public children?: EntityClassNode[];
 }
 
