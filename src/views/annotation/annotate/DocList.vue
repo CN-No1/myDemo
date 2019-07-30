@@ -2,10 +2,20 @@
   <div>
     <div class="header">
       <div>
-        <el-select v-model="moduleId" placeholder="请选择模块" @change="selectModule">
+        <el-select
+          v-model="moduleId"
+          placeholder="请选择模块"
+          @change="selectModule"
+          :disabled="loading"
+        >
           <el-option v-for="item in modules" :key="item.id" :label="item.name" :value="item.id"></el-option>
         </el-select>
-        <el-select v-model="statusCode" placeholder="请选择状态" @change="selectStatus">
+        <el-select
+          v-model="statusCode"
+          placeholder="请选择状态"
+          @change="selectStatus"
+          :disabled="loading"
+        >
           <el-option v-for="item in status" :key="item.id" :label="item.name" :value="item.id"></el-option>
         </el-select>
       </div>
@@ -102,10 +112,10 @@
         </el-dialog>
       </el-col>
       <el-col :span="12" class="edit-area">
-        <div v-if="isEdit" class="edit-form">
+        <div v-show="isEdit" class="edit-form">
           <annotate ref="annotator" :editDoc="editDoc"></annotate>
         </div>
-        <div v-if="!isEdit" class="tips">
+        <div v-show="!isEdit" class="tips">
           <span>请点击一行进行编辑</span>
         </div>
       </el-col>
@@ -119,7 +129,7 @@ import AnnotationAPIImpl from "@/api/impl/AnnotationAPIImpl";
 import ModuleModel from "@/api/model/ModuleModel";
 import EntityAPIImpl from "@/api/impl/EntityAPIImpl";
 import Annotate from "./Annotate.vue";
-import NLUEntity from '@/api/model/NLUEntity';
+import NLUEntity from "@/api/model/NLUEntity";
 @Component({
   components: { Annotate }
 })
@@ -128,6 +138,9 @@ export default class DocList extends Vue {
   $confirm: any;
   $message: any;
   private docContent(val: any) {
+    if (val.content.length > 20) {
+      return val.content.substr(0,20).concat("...");
+    }
     return val.content;
   }
   private statusFmt(val: any) {
@@ -207,8 +220,29 @@ export default class DocList extends Vue {
   }
 
   private clickRow(row: any) {
-    this.editDoc = row;
-    this.isEdit = true;
+    const ref = this.$refs.annotator as any;
+    if (ref.doneEdit) {
+      this.$confirm("检测到未保存的内容，是否在离开前保存修改？", "确认信息", {
+        distinguishCancelAndClose: true,
+        confirmButtonText: "保存",
+        cancelButtonText: "放弃修改"
+      })
+        .then(() => {
+          ref.saveAll();
+          this.getDocByParam();
+          this.editDoc = row;
+          this.isEdit = true;
+        })
+        .catch((action: any) => {
+          if (action === "cancel") {
+            this.editDoc = row;
+            this.isEdit = true;
+          }
+        });
+    } else {
+      this.editDoc = row;
+      this.isEdit = true;
+    }
   }
 
   private creatDoc() {

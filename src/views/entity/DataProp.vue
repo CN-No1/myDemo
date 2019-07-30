@@ -1,7 +1,7 @@
 <template>
   <div class="header" @click="closePop">
     <div>
-      <el-select v-model="moduleId" placeholder="请选择模块" @change="selectmodule">
+      <el-select v-model="moduleId" placeholder="请选择模块" @change="selectmodule" :disabled="loading">
         <el-option v-for="item in modules" :key="item.id" :label="item.name" :value="item.id"></el-option>
       </el-select>
       <el-popover ref="popover" placement="bottom" width="160" trigger="manual" v-model="visible">
@@ -171,7 +171,6 @@ export default class DataProp extends Vue {
     const newChild: DataPropNode = {
       id: getUUID(),
       label: "空节点",
-      children: [],
       entityClass: [],
       dataType: ""
     };
@@ -179,11 +178,22 @@ export default class DataProp extends Vue {
       this.$set(data, "children", []);
     }
     data.children.unshift(newChild);
+    this.formVisable = true;
+    this.node = newChild;
+    const input = this.$refs.nodeName as any;
+    input.focus();
     this.doneEdit = true;
   }
 
   private remove(node: any, data: any) {
     // 删除当前节点
+    if (data.children) {
+      this.$message({
+        type: "error",
+        message: "该节点有子节点，不可删除！"
+      });
+      return;
+    }
     this.$confirm("确认删除吗?", "提示", {
       confirmButtonText: "确定",
       cancelButtonText: "取消",
@@ -225,7 +235,6 @@ export default class DataProp extends Vue {
       const node: DataPropNode = {
         id: getUUID(),
         label: this.newNode,
-        children: [],
         entityClass: [],
         dataType: ""
       };

@@ -100,6 +100,7 @@ export default class Annotate extends Vue {
   private init() {
     // 初始化
     this.loading = true;
+    this.doneEdit = false;
     this.seletedWord = false;
     this.text = "";
     this.entityArr = [];
@@ -160,32 +161,6 @@ export default class Annotate extends Vue {
       };
       this.entityArr.push(obj);
     });
-  }
-
-  private saveChange() {
-    // 返回
-    if (this.doneEdit) {
-      this.$confirm(
-        "检测到未保存的内容，是否在离开页面前保存修改？",
-        "确认信息",
-        {
-          distinguishCancelAndClose: true,
-          confirmButtonText: "保存",
-          cancelButtonText: "放弃修改"
-        }
-      )
-        .then(() => {
-          this.saveAll();
-          this.$router.back();
-        })
-        .catch((action: any) => {
-          if (action === "cancel") {
-            this.$router.back();
-          }
-        });
-    } else {
-      this.$router.back();
-    }
   }
 
   private deleteRow(row: any) {

@@ -17,27 +17,41 @@ export const NestedToFlat = (data: any, moduleId: string, pid?: string) => {
     return res;
 };
 
-export const FlatToNested = (data: any, option?: any) => {
-    // 平铺转嵌套
-    option = option || {};
-    const idProperty = option.idProperty || "id";
-    const parentProperty = option.parentProperty || "pid";
-    const childrenProperty = option.childrenProperty || "children";
-    const res = [];
-    const tmpMap = [];
-    for (const item of data) {
-        tmpMap[item[idProperty]] = item;
-        if (
-            tmpMap[item[parentProperty]] &&
-            item[idProperty] !== item[parentProperty]
-        ) {
-            if (!tmpMap[item[parentProperty]][childrenProperty]) {
-                tmpMap[item[parentProperty]][childrenProperty] = [];
+// export const FlatToNested = (data: any, option?: any) => {
+//     // 平铺转嵌套
+//     debugger;
+//     option = option || {};
+//     const idProperty = option.idProperty || "id";
+//     const parentProperty = option.parentProperty || "pid";
+//     const childrenProperty = option.childrenProperty || "children";
+//     const res = [];
+//     const tmpMap = [];
+//     for (const item of data) {
+//         tmpMap[item[idProperty]] = item;
+//         if (
+//             tmpMap[item[parentProperty]] &&
+//             item[idProperty] !== item[parentProperty]
+//         ) {
+//             if (!tmpMap[item[parentProperty]][childrenProperty]) {
+//                 tmpMap[item[parentProperty]][childrenProperty] = [];
+//             }
+//             tmpMap[item[parentProperty]][childrenProperty].push(item);
+//         } else {
+//             res.push(item);
+//         }
+//     }
+//     return res;
+// };
+
+export const FlatToNested = (arr: any[]) => {
+    for (const item of arr) {
+        const temp = arr.filter((i) => i.id === item.pid)[0];
+        if (temp) {
+            if (!temp.children) {
+                temp.children = [];
             }
-            tmpMap[item[parentProperty]][childrenProperty].push(item);
-        } else {
-            res.push(item);
+            temp.children.push(item);
         }
     }
-    return res;
-};
+    return arr.filter((item) => item.pid === "0");
+}

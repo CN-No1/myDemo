@@ -1,7 +1,7 @@
 <template>
   <div class="header" @click="closePop">
     <div>
-      <el-select v-model="moduleId" placeholder="请选择模块" @change="selectmodule">
+      <el-select v-model="moduleId" placeholder="请选择模块" @change="selectmodule" :disabled="loading">
         <el-option v-for="item in modules" :key="item.id" :label="item.name" :value="item.id"></el-option>
       </el-select>
       <el-popover ref="popover" placement="bottom" width="160" trigger="manual" v-model="visible">
@@ -26,7 +26,9 @@
           draggable
         >
           <span class="custom-tree-node" slot-scope="{ node, data }">
-            <span>{{ node.label }}</span>
+            <span v-if="!node.flag">{{ node.label }}</span>
+            <!-- <el-input class="tree-input" v-model="node.label" v-if="node.flag"></el-input>
+            <el-button size="mini" type="primary" v-if="node.flag" @click="node.flag = false">确认</el-button>-->
             <span>
               <el-button
                 type="text"
@@ -53,10 +55,13 @@
             @input="editNodeName"
             @focus="inputFocus($event)"
           ></el-input>
-        </div>        
-        <div class="node-name">
+        </div>
+        <div class="text-area">
           <span>描述:</span>
           <el-input
+            type="textarea"
+            placeholder="对节点的描述"
+            :rows="5"
             v-model="node.description"
             @input="editNodeDesc"
             @focus="inputFocus($event)"
@@ -78,7 +83,7 @@ import { NestedToFlat, FlatToNested } from "@/util/tranformTreeData";
 export default class Entity extends Vue {
   private formVisable: boolean = false;
   private entityClass: EntityClassNode[] = [];
-  private node: EntityClassNode = { label: "",description:"" }; // 节点临时对象，用于动态修改树节点展示
+  private node: EntityClassNode = { label: "", description: "" }; // 节点临时对象，用于动态修改树节点展示
   private moduleId: string = "5d2fe2f28eb1330dcc8f46bd"; // 选中moduleId
   private modules: any[] = []; // module下拉数据
   private doneEdit: boolean = false; // 页面是否有修改
@@ -142,29 +147,40 @@ export default class Entity extends Vue {
 
   private append(node: any, data: any) {
     // 新增子节点
-    const newChild: EntityClassNode = {
+    const newChild: any = {
       id: getUUID(),
       label: "空节点",
       description: "",
       bandFlag: "0",
-      children: []
+      flag: true
     };
     if (!data.children) {
       this.$set(data, "children", []);
     }
     data.children.unshift(newChild);
+    this.formVisable = true;
+    this.node = newChild;
+    const input = this.$refs.nodeName as any;
+    input.focus();
     this.doneEdit = true;
   }
 
   private remove(node: any, data: any) {
     // 删除当前节点
+    if (data.children) {
+      this.$message({
+        type: "error",
+        message: "该节点有子节点，不可删除！"
+      });
+      return;
+    }
     this.$confirm("确认删除吗?", "提示", {
       confirmButtonText: "确定",
       cancelButtonText: "取消",
       type: "warning"
     })
       .then(() => {
-        this.entityAPI
+        this.entityAPI;
         const parent = node.parent;
         const children = parent.data.children || parent.data;
         const index = children.findIndex((d: any) => d.id === data.id);
@@ -202,8 +218,7 @@ export default class Entity extends Vue {
         id: getUUID(),
         label: this.newNode,
         description: "",
-        bandFlag: "0",
-        children: []
+        bandFlag: "0"
       };
       this.entityClass.unshift(node);
       this.doneEdit = true;
@@ -258,4 +273,11 @@ export default class Entity extends Vue {
 
 <style lang="less" scoped>
 @import "~less/tree-form";
+.text-area {
+  width: 300px;
+  & > span:first-child {
+    display: block;
+    margin-block-end: 15px;
+  }
+}
 </style>
