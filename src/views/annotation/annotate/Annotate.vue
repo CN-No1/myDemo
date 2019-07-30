@@ -71,13 +71,6 @@ export default class Annotate extends Vue {
   @Prop()
   private editDoc!: NLUEntity;
 
-  @Watch("editDoc", { immediate: true, deep: true })
-  private docChange(newVal: any, oldVal: any) {
-    this.doc = Object.assign(this.doc, newVal);
-    this.init();
-    this.getEntityList();
-  }
-
   private doc: NLUEntity = { content: "", annotationList: [] }; //  文档对象
   private annotation = new AnnotationModel();
   private dialogVisible: boolean = false; // 对话框显示
@@ -90,8 +83,14 @@ export default class Annotate extends Vue {
   private doneEdit: boolean = false; // 页面是否有修改
   private seletedWord: boolean = false; // 是否选中一个单词
   private loading: boolean = true;
-  $confirm: any;
-  $message: any;
+  private myThis: any = this;
+
+  @Watch("editDoc", { immediate: true, deep: true })
+  private docChange(newVal: any, oldVal: any) {
+    this.doc = Object.assign(this.doc, newVal);
+    this.init();
+    this.getEntityList();
+  }
 
   private rowStyle() {
     return "background-color: aliceblue;";
@@ -109,7 +108,9 @@ export default class Annotate extends Vue {
   private getEntityList() {
     // 获取实体类树
     this.entityAPI.getClass(this.doc.moduleId).then(({ data }) => {
-      if (data) this.entityList = FlatToNested(data);
+      if (data) {
+        this.entityList = FlatToNested(data);
+      }
       this.loading = false;
     });
   }
@@ -134,7 +135,7 @@ export default class Annotate extends Vue {
   private addLabel(offset: any) {
     // 添加标注点
     this.doc.annotationList = [];
-    this.entityArr.map(item => {
+    this.entityArr.map((item) => {
       const newLabel: Annotation = {
         startOffset: offset.startOffset,
         endOffset: offset.endOffset,
@@ -151,10 +152,10 @@ export default class Annotate extends Vue {
     this.seletedWord = true;
     this.entityArr = [];
     const innerTableData = this.doc.annotationList.filter(
-      item => item.value === value
+      (item) => item.value === value
     );
     this.text = value;
-    innerTableData.map(item => {
+    innerTableData.map((item) => {
       const obj = {
         id: item.entityId,
         label: item.value
@@ -166,14 +167,17 @@ export default class Annotate extends Vue {
   private deleteRow(row: any) {
     // 删除一行
     this.doc.annotationList.splice(row.$index, 1);
-    this.entityArr = this.entityArr.filter(item => item.id != row.row.entityId);
+    this.entityArr = this.entityArr.filter(
+      (item) => item.id !== row.row.entityId
+    );
   }
 
   private saveAll() {
     // 保存标注信息
     this.annotationAPI.createOrUpdateAnnotation(this.doc).then((res: any) => {
       if (res.code === 0) {
-        this.$message({
+        this.$emit("doneSave");
+        this.myThis.$message({
           message: "保存成功！",
           type: "success"
         });

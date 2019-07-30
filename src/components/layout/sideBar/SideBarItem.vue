@@ -1,7 +1,7 @@
 <template>
   <el-submenu v-if="item.children" :index="item.name">
     <template slot="title">
-      <i class="iconfont">{{item.meta.iconClass}}</i>
+      <i class="iconfont" v-html="item.meta.iconClass"></i>
       <span slot="title">{{item.meta.menuName}}</span>
     </template>
     <el-menu-item
@@ -13,7 +13,7 @@
     >{{child.meta.menuName}}</el-menu-item>
   </el-submenu>
   <el-menu-item v-else :index="item.name" @click="pushTo(item.name)">
-    <i class="iconfont">{{item.meta.iconClass}}</i>
+    <i class="iconfont" v-html="item.meta.iconClass"></i>
     <template slot="title">{{item.meta.menuName}}</template>
   </el-menu-item>
 </template>

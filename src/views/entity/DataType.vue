@@ -67,8 +67,7 @@ export default class DataType extends Vue {
   private loading: boolean = true;
   private visible: boolean = false;
   private newNode: string = "";
-  $confirm: any;
-  $message: any;
+  private myThis: any = this;
 
   private mounted() {
     // 初始化
@@ -78,7 +77,9 @@ export default class DataType extends Vue {
   private getDataType() {
     // 获取数据类型树
     this.entityAPI.getDataType().then(({ data }) => {
-      if (data) this.dataTypeTree = data;
+      if (data) {
+        this.dataTypeTree = data;
+      }
       this.loading = false;
     });
   }
@@ -149,11 +150,11 @@ export default class DataType extends Vue {
   private save() {
     // 保存数据类型树
     this.loading = true;
-    this.entityAPI.creatOrUpdateDataType(this.dataTypeTree).then(data => {
+    this.entityAPI.creatOrUpdateDataType(this.dataTypeTree).then(({ data }) => {
       this.loading = false;
       this.doneEdit = false;
       this.formVisable = false;
-      this.$message({
+      this.myThis.$message({
         type: "success",
         message: "保存成功!"
       });
@@ -164,15 +165,16 @@ export default class DataType extends Vue {
   private beforeRouteLeave(to: any, from: any, next: () => void) {
     // 离开页面前保存
     if (this.doneEdit) {
-      this.$confirm(
-        "检测到未保存的内容，是否在离开页面前保存修改？",
-        "确认信息",
-        {
-          distinguishCancelAndClose: true,
-          confirmButtonText: "保存",
-          cancelButtonText: "放弃修改"
-        }
-      )
+      this.myThis
+        .$confirm(
+          "检测到未保存的内容，是否在离开页面前保存修改？",
+          "确认信息",
+          {
+            distinguishCancelAndClose: true,
+            confirmButtonText: "保存",
+            cancelButtonText: "放弃修改"
+          }
+        )
         .then(() => {
           this.save();
           next();

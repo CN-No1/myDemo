@@ -17,19 +17,17 @@ import { Vue, Component, Prop, Watch } from "vue-property-decorator";
 export default class Annotator extends Vue {
   @Prop()
   private doc!: string;
-
-  @Watch("doc", { immediate: true, deep: true })
-  private docChange(newVal: any, oldVal: any) {
-    this.docContent = newVal;
-  }
-
-  private docContent: string = "";
-
   @Prop()
   private entityPosition!: any[];
 
   private startOffset!: number; // 头偏移值
   private endOffset!: number; // 尾偏移值
+  private docContent: string = "";
+
+  @Watch("doc", { immediate: true, deep: true })
+  private docChange(newVal: any, oldVal: any) {
+    this.docContent = newVal;
+  }
 
   get sortPositionList() {
     // 对标注位置进行升序排序,并且去重
@@ -93,7 +91,9 @@ export default class Annotator extends Vue {
       preSelectionRange.setEnd(range.startContainer, range.startOffset); // 将原本range对象的开始点作为文档开头到开始点的结束位置，从而找出开始点的真正偏移值
       start = preSelectionRange.toString().length;
       end = start + range.toString().length;
-      if (start === end) return;
+      if (start === end) {
+        return;
+      }
       if (this.validRange(start, end)) {
         this.$emit("getRangeData", range.toString());
         this.startOffset = start;

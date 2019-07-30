@@ -113,7 +113,7 @@
       </el-col>
       <el-col :span="12" class="edit-area">
         <div v-show="isEdit" class="edit-form">
-          <annotate ref="annotator" :editDoc="editDoc"></annotate>
+          <annotate ref="annotator" :editDoc="editDoc" @doneSave="doneSave"></annotate>
         </div>
         <div v-show="!isEdit" class="tips">
           <span>请点击一行进行编辑</span>
@@ -135,22 +135,6 @@ import NLUEntity from "@/api/model/NLUEntity";
 })
 export default class DocList extends Vue {
   private tableData: NLUEntity[] = [];
-  $confirm: any;
-  $message: any;
-  private docContent(val: any) {
-    if (val.content.length > 20) {
-      return val.content.substr(0,20).concat("...");
-    }
-    return val.content;
-  }
-  private statusFmt(val: any) {
-    switch (val.status) {
-      case "0":
-        return "未标注";
-      case "1":
-        return "已标注";
-    }
-  }
   private modules: ModuleModel[] = [];
   private status: any[] = [
     {
@@ -160,9 +144,13 @@ export default class DocList extends Vue {
     {
       id: "1",
       name: "已标注"
+    },
+    {
+      id: "",
+      name: "全部"
     }
   ];
-  private moduleId: string = "5d2fe2f28eb1330dcc8f46bd"; // 模块Id
+  private moduleId: string = "5d2fe2f28eb1330dcc8f46bd"; // 模块Id，默认为道路交通
   private statusCode: string = "0"; // 状态码
   private page: number = 1; // 当前页
   private size: number = 10; // 每页多少条
@@ -175,6 +163,22 @@ export default class DocList extends Vue {
   private newModuleId: string = ""; // 新增文档模块id
   private annotationAPI = new AnnotationAPIImpl();
   private entityAPI = new EntityAPIImpl();
+  private myThis: any = this;
+
+  private docContent(val: any) {
+    if (val.content.length > 20) {
+      return val.content.substr(0, 20).concat("...");
+    }
+    return val.content;
+  }
+  private statusFmt(val: any) {
+    switch (val.status) {
+      case "0":
+        return "未标注";
+      case "1":
+        return "已标注";
+    }
+  }
 
   private mounted() {
     this.getModule();
@@ -216,17 +220,19 @@ export default class DocList extends Vue {
   }
 
   private selectStatus(val: any) {
+    this.page = 1;
     this.getDocByParam();
   }
 
   private clickRow(row: any) {
     const ref = this.$refs.annotator as any;
     if (ref.doneEdit) {
-      this.$confirm("检测到未保存的内容，是否在离开前保存修改？", "确认信息", {
-        distinguishCancelAndClose: true,
-        confirmButtonText: "保存",
-        cancelButtonText: "放弃修改"
-      })
+      this.myThis
+        .$confirm("检测到未保存的内容，是否在离开前保存修改？", "确认信息", {
+          distinguishCancelAndClose: true,
+          confirmButtonText: "保存",
+          cancelButtonText: "放弃修改"
+        })
         .then(() => {
           ref.saveAll();
           this.getDocByParam();
@@ -243,6 +249,10 @@ export default class DocList extends Vue {
       this.editDoc = row;
       this.isEdit = true;
     }
+  }
+
+  private doneSave() {
+    this.getDocByParam();
   }
 
   private creatDoc() {
@@ -264,9 +274,9 @@ export default class DocList extends Vue {
       status: "0",
       annotationList: []
     };
-    this.annotationAPI.createNLUDoc(doc).then(data => {
+    this.annotationAPI.createNLUDoc(doc).then(({ data }) => {
       this.dialogVisible = false;
-      this.$message({
+      this.myThis.$message({
         type: "success",
         message: "新增成功!"
       });
@@ -276,22 +286,23 @@ export default class DocList extends Vue {
 
   private deleteDoc(id: string) {
     // 删除文档
-    this.$confirm("此操作将永久删除该条数据, 是否继续?", "提示", {
-      confirmButtonText: "确定",
-      cancelButtonText: "取消",
-      type: "warning"
-    })
+    this.myThis
+      .$confirm("此操作将永久删除该条数据, 是否继续?", "提示", {
+        confirmButtonText: "确定",
+        cancelButtonText: "取消",
+        type: "warning"
+      })
       .then(() => {
-        this.annotationAPI.deleteNLUDoc(id).then(data => {
+        this.annotationAPI.deleteNLUDoc(id).then(({ data }) => {
           this.getDocByParam();
-          this.$message({
+          this.myThis.$message({
             type: "success",
             message: "删除成功!"
           });
         });
       })
       .catch(() => {
-        this.$message({
+        this.myThis.$message({
           type: "info",
           message: "已取消删除"
         });

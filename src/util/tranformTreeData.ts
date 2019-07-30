@@ -44,6 +44,7 @@ export const NestedToFlat = (data: any, moduleId: string, pid?: string) => {
 // };
 
 export const FlatToNested = (arr: any[]) => {
+    // 平铺转嵌套
     for (const item of arr) {
         const temp = arr.filter((i) => i.id === item.pid)[0];
         if (temp) {
@@ -54,4 +55,4 @@ export const FlatToNested = (arr: any[]) => {
         }
     }
     return arr.filter((item) => item.pid === "0");
-}
+};

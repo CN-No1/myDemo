@@ -11,13 +11,13 @@ export default new Router({
     {
       path: "/",
       name: "home",
-      meta: { menuName: "首页", iconClass: "" },
+      meta: { menuName: "首页", iconClass: "&#xe604;" },
       component: () => import("./views/Home.vue"),
     },
     {
       path: "/entity",
       name: "entity",
-      meta: { menuName: "实体", iconClass: "" },
+      meta: { menuName: "实体", iconClass: "&#xe75d;" },
       component: InnerLayout,
       redirect: "/entity/classes",
       children: [
@@ -50,7 +50,7 @@ export default new Router({
     {
       path: "/annotation",
       name: "annotation",
-      meta: { menuName: "标注", iconClass: "" },
+      meta: { menuName: "标注", iconClass: "&#xe673;" },
       component: InnerLayout,
       redirect: "/annotation/uploadFile",
       children: [

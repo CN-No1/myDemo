@@ -91,8 +91,7 @@ export default class Entity extends Vue {
   private loading: boolean = true;
   private visible: boolean = false;
   private newNode: string = "";
-  $confirm: any;
-  $message: any;
+  private myThis: any = this;
 
   private mounted() {
     // 初始化
@@ -115,7 +114,9 @@ export default class Entity extends Vue {
   private getClass() {
     // 获取实体类
     this.entityAPI.getClass(this.moduleId).then(({ data }) => {
-      if (data) this.entityClass = FlatToNested(data);
+      if (data) {
+        this.entityClass = FlatToNested(data);
+      }
       this.loading = false;
     });
   }
@@ -167,33 +168,34 @@ export default class Entity extends Vue {
 
   private remove(node: any, data: any) {
     // 删除当前节点
+
     if (data.children) {
-      this.$message({
+      this.myThis.$message({
         type: "error",
         message: "该节点有子节点，不可删除！"
       });
       return;
     }
-    this.$confirm("确认删除吗?", "提示", {
-      confirmButtonText: "确定",
-      cancelButtonText: "取消",
-      type: "warning"
-    })
+    this.myThis
+      .$confirm("确认删除吗?", "提示", {
+        confirmButtonText: "确定",
+        cancelButtonText: "取消",
+        type: "warning"
+      })
       .then(() => {
-        this.entityAPI;
         const parent = node.parent;
         const children = parent.data.children || parent.data;
         const index = children.findIndex((d: any) => d.id === data.id);
         children.splice(index, 1);
         this.formVisable = false;
-        this.$message({
+        this.myThis.$message({
           type: "success",
           message: "删除成功!"
         });
         this.doneEdit = true;
       })
       .catch(() => {
-        this.$message({
+        this.myThis.$message({
           type: "info",
           message: "已取消删除"
         });
@@ -231,11 +233,11 @@ export default class Entity extends Vue {
     // 保存实体树
     this.loading = true;
     const flatData = NestedToFlat(this.entityClass, this.moduleId);
-    this.entityAPI.creatOrUpdateClass(flatData).then(data => {
+    this.entityAPI.creatOrUpdateClass(flatData).then(({ data }) => {
       this.loading = false;
       this.doneEdit = false;
       this.formVisable = false;
-      this.$message({
+      this.myThis.$message({
         type: "success",
         message: "保存成功!"
       });
@@ -246,15 +248,16 @@ export default class Entity extends Vue {
   private beforeRouteLeave(to: any, from: any, next: () => void) {
     // 离开页面前保存
     if (this.doneEdit) {
-      this.$confirm(
-        "检测到未保存的内容，是否在离开页面前保存修改？",
-        "确认信息",
-        {
-          distinguishCancelAndClose: true,
-          confirmButtonText: "保存",
-          cancelButtonText: "放弃修改"
-        }
-      )
+      this.myThis
+        .$confirm(
+          "检测到未保存的内容，是否在离开页面前保存修改？",
+          "确认信息",
+          {
+            distinguishCancelAndClose: true,
+            confirmButtonText: "保存",
+            cancelButtonText: "放弃修改"
+          }
+        )
         .then(() => {
           this.save();
           next();

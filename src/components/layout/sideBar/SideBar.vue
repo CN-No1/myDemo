@@ -21,7 +21,7 @@ import SideBarItem from "./SideBarItem.vue";
   components: { SideBarItem },
 })
 export default class SideBar extends Vue {
-  @Prop(Boolean) 
+  @Prop(Boolean)
   private isCollapse: boolean = false;
   private defaultActive: string = "home";
   private sideMenu: any[] = [];
